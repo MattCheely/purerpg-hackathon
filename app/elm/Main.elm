@@ -20,40 +20,25 @@ main =
 
 
 type alias Model =
-    { character : Character
-    , enemy : Enemy
+    { character : Creature
+    , enemy : Creature
+    , lastAttack : Maybe Attack
     }
 
 
-type alias Enemy =
-    { monsterType : MonsterType
+type alias Creature =
+    { creatureType : CreatureType
     , hitPoints : Int
     }
 
 
-type MonsterType
+type CreatureType
     = Goblin
-
-
-type alias Character =
-    { class : Class
-    , hitPoints : Int
-    }
-
-
-monsterHp : MonsterType -> Int
-monsterHp monster =
-    case monster of
-        Goblin ->
-            5
-
-
-type Class
-    = Fighter
+    | Fighter
     | Wizard
 
 
-maxHp : Class -> Int
+maxHp : CreatureType -> Int
 maxHp class =
     case class of
         Wizard ->
@@ -62,17 +47,33 @@ maxHp class =
         Fighter ->
             10
 
+        Goblin ->
+            5
+
+
+type alias Attack =
+    { attacker : Creature
+    , victim : Creature
+    , result : AttackResult
+    }
+
+
+type AttackResult
+    = Hit Int
+    | Miss
+
 
 init : ( Model, Cmd Msg )
 init =
     ( { character =
-            { class = Wizard
+            { creatureType = Wizard
             , hitPoints = maxHp Wizard
             }
       , enemy =
-            { monsterType = Goblin
-            , hitPoints = monsterHp Goblin
+            { creatureType = Goblin
+            , hitPoints = maxHp Goblin
             }
+      , lastAttack = Nothing
       }
     , Cmd.none
     )
@@ -83,14 +84,44 @@ init =
 
 
 type Msg
-    = NoOp
+    = PlayerAttack
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
+        PlayerAttack ->
+            let
+                attackResult =
+                    doAttack model.character model.enemy
+            in
+            ( { model
+                | character = attackResult.attacker
+                , enemy = attackResult.victim
+                , lastAttack = Just attackResult
+              }
+            , Cmd.none
+            )
+
+
+doAttack : Creature -> Creature -> Attack
+doAttack attacker victim =
+    let
+        damage =
+            case attacker.creatureType of
+                Wizard ->
+                    4
+
+                Fighter ->
+                    2
+
+                Goblin ->
+                    1
+    in
+    { attacker = attacker
+    , victim = { victim | hitPoints = victim.hitPoints - damage }
+    , result = Hit damage
+    }
 
 
 
@@ -100,18 +131,22 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ classView model.character.class
+        [ creatureView model.character.creatureType
+        , button [ onClick PlayerAttack ] [ text "attack!" ]
         ]
 
 
-classView : Class -> Html Msg
-classView class =
-    case class of
+creatureView : CreatureType -> Html Msg
+creatureView creature =
+    case creature of
         Wizard ->
             text "You're a wizard, Harry!"
 
         Fighter ->
             text "Conan, what is best in life?!"
+
+        Goblin ->
+            text "Splork smash!"
 
 
 
