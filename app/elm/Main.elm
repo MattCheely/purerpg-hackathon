@@ -21,13 +21,31 @@ main =
 
 type alias Model =
     { character : Character
+    , enemy : Enemy
     }
+
+
+type alias Enemy =
+    { monsterType : MonsterType
+    , hitPoints : Int
+    }
+
+
+type MonsterType
+    = Goblin
 
 
 type alias Character =
     { class : Class
     , hitPoints : Int
     }
+
+
+monsterHp : MonsterType -> Int
+monsterHp monster =
+    case monster of
+        Goblin ->
+            5
 
 
 type Class
@@ -50,6 +68,10 @@ init =
     ( { character =
             { class = Wizard
             , hitPoints = maxHp Wizard
+            }
+      , enemy =
+            { monsterType = Goblin
+            , hitPoints = monsterHp Goblin
             }
       }
     , Cmd.none
