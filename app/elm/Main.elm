@@ -27,7 +27,7 @@ type Model
 type alias CombatModel =
     { character : Creature
     , enemy : Creature
-    , lastAttack : Maybe Attack
+    , turnActions : List Attack
     }
 
 
@@ -102,7 +102,7 @@ update msg model =
             ( WithCharacter
                 { character = newCreature creatureType
                 , enemy = newCreature Goblin
-                , lastAttack = Nothing
+                , turnActions = []
                 }
             , Cmd.none
             )
@@ -119,13 +119,16 @@ updateCombat msg model =
     case msg of
         PlayerAttack ->
             let
-                attackResult =
+                playerAttackResult =
                     doAttack model.character model.enemy
+
+                enemyAttackResult =
+                    doAttack playerAttackResult.victim playerAttackResult.attacker
             in
             { model
-                | character = attackResult.attacker
-                , enemy = attackResult.victim
-                , lastAttack = Just attackResult
+                | character = enemyAttackResult.victim
+                , enemy = enemyAttackResult.attacker
+                , turnActions = [ playerAttackResult, enemyAttackResult ]
             }
 
 
