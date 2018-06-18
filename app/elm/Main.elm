@@ -1,7 +1,7 @@
 module Main exposing (main)
 
-import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class)
+import Html exposing (Html, button, div, img, text)
+import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
 
 
@@ -131,8 +131,15 @@ doAttack attacker victim =
 view : Model -> Html Msg
 view model =
     div []
-        [ creatureView model.character.creatureType
-        , button [ onClick PlayerAttack ] [ text "attack!" ]
+        [ div []
+            [ creatureView model.character.creatureType ]
+        , div []
+            [ div [] [ text (toString model.character.creatureType ++ " hp: " ++ toString model.character.hitPoints) ]
+            , img [ src (creatureImg model.character.creatureType) ] []
+            , img [ src (creatureImg model.enemy.creatureType) ] []
+            , div [] [ text (toString model.enemy.creatureType ++ " hp: " ++ toString model.enemy.hitPoints) ]
+            ]
+        , div [] [ button [ onClick PlayerAttack ] [ text "attack!" ] ]
         ]
 
 
@@ -147,6 +154,19 @@ creatureView creature =
 
         Goblin ->
             text "Splork smash!"
+
+
+creatureImg : CreatureType -> String
+creatureImg class =
+    case class of
+        Wizard ->
+            "images/wizard.png"
+
+        Fighter ->
+            "images/fighter.png"
+
+        Goblin ->
+            "images/goblin.png"
 
 
 
