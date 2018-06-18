@@ -5,9 +5,9 @@ import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
 
 
-main : Program Never Model Msg
+main : Program String Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , update = update
         , view = view
@@ -19,7 +19,13 @@ main =
 -- Model
 
 
-type Model
+type alias Model =
+    { token : String
+    , appModel : AppModel
+    }
+
+
+type AppModel
     = SelectingCharacter
     | WithCharacter CombatModel
 
@@ -75,9 +81,9 @@ type AttackResult
     | Miss
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( SelectingCharacter
+init : String -> ( Model, Cmd Msg )
+init token =
+    ( { token = token, appModel = SelectingCharacter }
     , Cmd.none
     )
 
@@ -97,7 +103,16 @@ type CombatMsg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( model, msg ) of
+    let
+        ( appModel, cmd ) =
+            updateApp msg model.appModel
+    in
+    ( { model | appModel = appModel }, cmd )
+
+
+updateApp : Msg -> AppModel -> ( AppModel, Cmd Msg )
+updateApp msg appModel =
+    case ( appModel, msg ) of
         ( SelectingCharacter, CharacterSelected creatureType ) ->
             ( WithCharacter
                 { character = newCreature creatureType
@@ -111,7 +126,7 @@ update msg model =
             ( WithCharacter (updateCombat msg combatModel), Cmd.none )
 
         ( _, _ ) ->
-            Debug.log "Message & Model mismatch" ( model, Cmd.none )
+            Debug.log "Message & Model mismatch" ( appModel, Cmd.none )
 
 
 updateCombat : CombatMsg -> CombatModel -> CombatModel
@@ -158,7 +173,7 @@ doAttack attacker victim =
 
 view : Model -> Html Msg
 view model =
-    case model of
+    case model.appModel of
         SelectingCharacter ->
             characterSelectionView
 
