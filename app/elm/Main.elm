@@ -19,7 +19,12 @@ main =
 -- Model
 
 
-type alias Model =
+type Model
+    = SelectingCharacter
+    | WithCharacter CombatModel
+
+
+type alias CombatModel =
     { character : Creature
     , enemy : Creature
     , lastAttack : Maybe Attack
@@ -36,6 +41,13 @@ type CreatureType
     = Goblin
     | Fighter
     | Wizard
+
+
+newCreature : CreatureType -> Creature
+newCreature creatureType =
+    { creatureType = creatureType
+    , hitPoints = maxHp creatureType
+    }
 
 
 maxHp : CreatureType -> Int
@@ -65,16 +77,7 @@ type AttackResult
 
 init : ( Model, Cmd Msg )
 init =
-    ( { character =
-            { creatureType = Wizard
-            , hitPoints = maxHp Wizard
-            }
-      , enemy =
-            { creatureType = Goblin
-            , hitPoints = maxHp Goblin
-            }
-      , lastAttack = Nothing
-      }
+    ( SelectingCharacter
     , Cmd.none
     )
 
@@ -84,24 +87,46 @@ init =
 
 
 type Msg
+    = CharacterSelected CreatureType
+    | CombatEvent CombatMsg
+
+
+type CombatMsg
     = PlayerAttack
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    case ( model, msg ) of
+        ( SelectingCharacter, CharacterSelected creatureType ) ->
+            ( WithCharacter
+                { character = newCreature creatureType
+                , enemy = newCreature Goblin
+                , lastAttack = Nothing
+                }
+            , Cmd.none
+            )
+
+        ( WithCharacter combatModel, CombatEvent msg ) ->
+            ( WithCharacter (updateCombat msg combatModel), Cmd.none )
+
+        ( _, _ ) ->
+            Debug.log "Message & Model mismatch" ( model, Cmd.none )
+
+
+updateCombat : CombatMsg -> CombatModel -> CombatModel
+updateCombat msg model =
     case msg of
         PlayerAttack ->
             let
                 attackResult =
                     doAttack model.character model.enemy
             in
-            ( { model
+            { model
                 | character = attackResult.attacker
                 , enemy = attackResult.victim
                 , lastAttack = Just attackResult
-              }
-            , Cmd.none
-            )
+            }
 
 
 doAttack : Creature -> Creature -> Attack
@@ -130,6 +155,28 @@ doAttack attacker victim =
 
 view : Model -> Html Msg
 view model =
+    case model of
+        SelectingCharacter ->
+            characterSelectionView
+
+        WithCharacter combatModel ->
+            combatView combatModel
+
+
+characterSelectionView : Html Msg
+characterSelectionView =
+    div []
+        [ div []
+            [ text "Choose your character!" ]
+        , div [ class "characters" ]
+            [ button [ onClick (CharacterSelected Wizard) ] [ text "Wizard!" ]
+            , button [ onClick (CharacterSelected Fighter) ] [ text "Fighter!" ]
+            ]
+        ]
+
+
+combatView : CombatModel -> Html Msg
+combatView model =
     div []
         [ div []
             [ creatureView model.character.creatureType ]
@@ -139,7 +186,7 @@ view model =
             , img [ src (creatureImg model.enemy.creatureType) ] []
             , div [] [ text (toString model.enemy.creatureType ++ " hp: " ++ toString model.enemy.hitPoints) ]
             ]
-        , div [] [ button [ onClick PlayerAttack ] [ text "attack!" ] ]
+        , div [] [ button [ onClick (CombatEvent PlayerAttack) ] [ text "attack!" ] ]
         ]
 
 
