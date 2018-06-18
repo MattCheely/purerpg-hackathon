@@ -1,5 +1,5 @@
 {
-  "name": "brunch-with-elm",
+  "name": "pure-rpg",
   "version": "1.0.0",
   "description": "Brunch With Elm",
   "main": "brunch-config.js",
@@ -14,7 +14,9 @@
   ],
   "author": "You!",
   "license": "BSD3",
-  "dependencies": {},
+  "dependencies": {
+    "purecloud-client-app-sdk": "^1.0.0"
+  },
   "devDependencies": {
     "auto-reload-brunch": "^2.7.1",
     "autoprefixer": "^7.1.6",
