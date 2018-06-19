@@ -1,4 +1,4 @@
-module Creature exposing (Attack, Creature, CreatureType(..), attack, new, showSprite)
+module Creature exposing (Attack, Creature, CreatureType(..), attack, decoder, encode, new, showSprite)
 
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)

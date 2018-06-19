@@ -4,9 +4,11 @@ import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
+import InterOp
+import Json.Decode as Decode exposing (Value)
 
 
-main : Program String Model Msg
+main : Program Value Model Msg
 main =
     Html.programWithFlags
         { init = init
@@ -38,15 +40,39 @@ type alias CombatModel =
     }
 
 
-init : String -> ( Model, Cmd Msg )
-init token =
-    ( { token = token, appModel = SelectingCharacter }
+init : Value -> ( Model, Cmd Msg )
+init config =
+    let
+        token =
+            Decode.decodeValue (Decode.field "token" Decode.string) config
+                |> Result.withDefault "1234"
+
+        previousChar =
+            Decode.decodeValue (Decode.field "char" Creature.decoder) config
+
+        appModel =
+            case previousChar of
+                Ok character ->
+                    WithCharacter
+                        { character = character
+                        , enemy = Creature.new Goblin
+                        , turnActions = []
+                        }
+
+                Err msg ->
+                    SelectingCharacter
+    in
+    ( { token = token, appModel = appModel }
     , Cmd.none
     )
 
 
 
 -- Update
+
+
+userId =
+    "1234"
 
 
 type Msg
@@ -71,12 +97,16 @@ updateApp : Msg -> AppModel -> ( AppModel, Cmd Msg )
 updateApp msg appModel =
     case ( appModel, msg ) of
         ( SelectingCharacter, CharacterSelected creatureType ) ->
+            let
+                char =
+                    Creature.new creatureType
+            in
             ( WithCharacter
-                { character = Creature.new creatureType
+                { character = char
                 , enemy = Creature.new Goblin
                 , turnActions = []
                 }
-            , Cmd.none
+            , InterOp.saveCharacter userId char
             )
 
         ( WithCharacter combatModel, CombatEvent msg ) ->
