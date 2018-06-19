@@ -178,15 +178,13 @@ characterSelectionView =
 combatView : CombatModel -> Html Msg
 combatView model =
     div []
-        [ div []
-            [ creatureView model.character.creatureType ]
-        , div []
-            [ div [] [ text (toString model.character.creatureType ++ " hp: " ++ toString model.character.hitPoints) ]
-            , img [ src (creatureImg model.character.creatureType) ] []
-            , img [ src (creatureImg model.enemy.creatureType) ] []
-            , div [] [ text (toString model.enemy.creatureType ++ " hp: " ++ toString model.enemy.hitPoints) ]
+        [ div [ class "characterDisplay" ]
+            [ div [ class "characterStats" ] [ text (toString model.character.creatureType ++ " hp: " ++ toString model.character.hitPoints) ]
+            , div [ class "character" ] [ img [ src (creatureImg model.character.creatureType) ] [], creatureView model.character.creatureType ]
+            , div [ class "character" ] [ img [ src (creatureImg model.enemy.creatureType) ] [], creatureView model.enemy.creatureType ]
+            , div [ class "characterStats" ] [ text (toString model.enemy.creatureType ++ " hp: " ++ toString model.enemy.hitPoints) ]
             ]
-        , div [] [ button [ onClick (CombatEvent PlayerAttack) ] [ text "attack!" ] ]
+        , div [] [ button [ class "attackButton", onClick (CombatEvent PlayerAttack) ] [ text "attack!" ] ]
         ]
 
 

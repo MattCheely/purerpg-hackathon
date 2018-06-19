@@ -10,3 +10,20 @@ body {
 .controls button {
   margin: 5px;
 }
+
+.characterDisplay {
+    display: flex;
+    justify-content: space-between;
+}
+
+.characterStats {
+    display: flex;
+    flex-direction: column;
+    height: 50px;
+    padding: 10px;
+}
+
+.character {
+    display: flex;
+    flex-direction: column;
+}
