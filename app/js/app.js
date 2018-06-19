@@ -1,39 +1,39 @@
 // import localForage from "localforage"
+const firebase = require('firebase');
 
 module.exports = {
     run() {
-        console.log("Javascript is still available.");
-
-        // check for auth token
-        let tokenIndex = window.location.href.indexOf('access_token');
-        let purecloudToken = null;
-
-        if (tokenIndex !== -1) {
-            purecloudToken = window.location.href.substring(tokenIndex + 13, window.location.href.indexOf('&'));
-        }
-
-
-        const redirectUri = `${window.location.origin}${window.location.pathname}`;
-        const platformClient = window.require('platformClient');
-        const environment = 'inindca.com';
-        const clientId = '9d029f54-f3df-43b8-a6b0-0c06cced3e96';
-        let client = platformClient.ApiClient.instance;
-        client.setEnvironment(environment);
-
-        if (!purecloudToken) {  // go to OAuth
-            return client.loginImplicitGrant(clientId, redirectUri);
-        } else {  // token exists, validate & move into Elm
-            let lf = require('localforage');
-            let userId = "1234";
-            lf.getItem(`forage.character.${userId}`).then(char => {   // load character data
-                let config = {
-                    token: purecloudToken,
-                    char
-                };
-                let app = require('elm/Main.elm').Main.fullscreen(config);
-                app.ports.toJs.subscribe(this.fromElm);
+        this.authToPurecloud()
+            .then(() => {
+                let lf = require('localforage');
+                let userId = "1234";
+                lf.getItem(`forage.character.${userId}`).then(char => {   // load character data
+                    let config = {
+                        token: this.accessToken,
+                        char
+                    };
+                    let app = require('elm/Main.elm').Main.fullscreen(config);
+                    app.ports.toJs.subscribe(this.fromElm);
+                });
             });
-        }
+    },
+
+    authToPurecloud() {
+        return new Promise((resolve, reject) => {
+            const redirectUri = `${window.location.origin}${window.location.pathname}`;
+            const platformClient = window.require('platformClient');
+            const environment = 'inindca.com';
+            const clientId = '9d029f54-f3df-43b8-a6b0-0c06cced3e96';
+            const client = platformClient.ApiClient.instance;
+
+            client.setEnvironment(environment);
+            client.setPersistSettings(true, 'optional_prefix');
+
+            resolve(client
+                .loginImplicitGrant(clientId, redirectUri)
+                .then(({accessToken}) =>
+                    this.accessToken = accessToken));
+        });
     },
 
     toElm(userId) {
@@ -44,9 +44,9 @@ module.exports = {
             // save to localForage
             let lf = require('localforage');
             console.log(`save my character ${blob}`);
-            lf.setItem(`forage.character.${blob.userId}`, blob.character)
+            lf.setItem(`forage.character.${blob.userId}`, blob.character);
         } else if (blob.action === 'load') {
-            this.toElm(blob.userId)
+            this.toElm(blob.userId);
         }
     }
 };
