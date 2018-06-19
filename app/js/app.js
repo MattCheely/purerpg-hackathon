@@ -1,13 +1,23 @@
-// import localForage from "localforage"
 const firebase = require('firebase');
+const localForage = require('localforage');
+const platformClient = window.require('platformClient');
 
 module.exports = {
+    purecloudEnvironment: 'inindca.com',
+    purecloudClientId: '9d029f54-f3df-43b8-a6b0-0c06cced3e96',
+    appRedirectUri: `${window.location.origin}${window.location.pathname}`,
+
+    accessToken: null,
+    userId: null,
+    userName: null,
+
     run() {
-        this.authToPurecloud()
+        Promise.resolve()
+            .then(() => this.authToPurecloud())
+            .then(() => this.loadPurecloudUser())
             .then(() => {
-                let lf = require('localforage');
                 let userId = "1234";
-                lf.getItem(`forage.character.${userId}`).then(char => {   // load character data
+                localForage.getItem(`forage.character.${userId}`).then(char => {   // load character data
                     let config = {
                         token: this.accessToken,
                         char
@@ -19,21 +29,23 @@ module.exports = {
     },
 
     authToPurecloud() {
-        return new Promise((resolve, reject) => {
-            const redirectUri = `${window.location.origin}${window.location.pathname}`;
-            const platformClient = window.require('platformClient');
-            const environment = 'inindca.com';
-            const clientId = '9d029f54-f3df-43b8-a6b0-0c06cced3e96';
-            const client = platformClient.ApiClient.instance;
+        const client = platformClient.ApiClient.instance;
 
-            client.setEnvironment(environment);
-            client.setPersistSettings(true, 'optional_prefix');
+        client.setEnvironment(this.purecloudEnvironment);
+        client.setPersistSettings(true, 'optional_prefix');
 
-            resolve(client
-                .loginImplicitGrant(clientId, redirectUri)
-                .then(({accessToken}) =>
-                    this.accessToken = accessToken));
-        });
+        return client
+            .loginImplicitGrant(this.purecloudClientId, this.appRedirectUri)
+            .then(({accessToken}) =>
+                this.accessToken = accessToken);
+    },
+
+    loadPurecloudUser() {
+        return new platformClient.UsersApi().getUsersMe()
+            .then(userModel => {
+                this.userId = userModel.id;
+                this.userName = userModel.name;
+            });
     },
 
     toElm(userId) {
@@ -42,9 +54,8 @@ module.exports = {
     fromElm(blob) {
         if (blob.action === 'save') {
             // save to localForage
-            let lf = require('localforage');
             console.log(`save my character ${blob}`);
-            lf.setItem(`forage.character.${blob.userId}`, blob.character);
+            localForage.setItem(`forage.character.${blob.userId}`, blob.character);
         } else if (blob.action === 'load') {
             this.toElm(blob.userId);
         }
