@@ -24,7 +24,7 @@ main =
 
 
 type alias Model =
-    { userId: String
+    { userId : String
     , token : String
     , appModel : AppModel
     }
@@ -78,7 +78,6 @@ init config =
 
 
 -- Update
-
 
 
 type Msg

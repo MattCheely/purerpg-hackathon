@@ -2,6 +2,7 @@ module Combat exposing (Model, Msg, init, update, view)
 
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
 
@@ -56,9 +57,11 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ div []
-            [ Creature.showSprite model.character
-            , Creature.showSprite model.enemy
+        [ div [ class "characterDisplay" ]
+            [ div [ class "character" ] [ Creature.showSprite model.character ]
+            , div [ class "enemy" ] [ Creature.showSprite model.enemy ]
             ]
-        , div [] [ button [ onClick PlayerAttack ] [ text "attack!" ] ]
+        , div
+            [ class "characterControl" ]
+            [ button [ class "attackButton", onClick PlayerAttack ] [ text "attack!" ] ]
         ]

@@ -1,7 +1,7 @@
 module Creature exposing (Attack, Creature, CreatureType(..), attack, decoder, encode, new, showSprite)
 
 import Html exposing (Html, div, img, text)
-import Html.Attributes exposing (class, src)
+import Html.Attributes exposing (class, src, style)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode exposing (object)
 
@@ -39,6 +39,14 @@ maxHp class =
 
         Goblin ->
             5
+
+
+health : Creature -> Float
+health creature =
+    if creature.hitPoints < 0 then
+        0
+    else
+        (toFloat creature.hitPoints / toFloat (maxHp creature.creatureType)) * 100
 
 
 attack : Creature -> Creature -> Attack
@@ -79,14 +87,14 @@ type AttackResult
 
 showSprite : Creature -> Html msg
 showSprite creature =
-    div []
+    div [ class "creature" ]
         [ img [ src (creatureImg creature.creatureType) ] []
-        , div []
-            [ text
-                (toString creature.creatureType
-                    ++ " hp: "
-                    ++ toString creature.hitPoints
-                )
+        , div [ class "creatureStats" ]
+            [ img [ class "hpImage", src "images/hp.png" ] []
+            , div
+                [ class "progressBar" ]
+                [ div [ class "progress", style [ ( "width", toString (health creature) ++ "%" ) ] ] []
+                ]
             ]
         ]
 
