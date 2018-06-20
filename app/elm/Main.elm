@@ -105,7 +105,7 @@ updateApp msg appModel =
         ( SelectingCharacter, CharacterSelected creatureType ) ->
             let
                 char =
-                    Creature.new creatureType
+                    Creature.new creatureType appModel.token
             in
             ( WithCharacter
                 { character = char

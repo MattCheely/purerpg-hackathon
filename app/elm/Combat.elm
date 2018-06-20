@@ -26,10 +26,10 @@ init player =
     , players = [ "1234" ]
     , characters =
         { allies = [ player ]
-        , enemies = [ Creature.new Goblin ]
+        , enemies = [ Creature.new Goblin "" ]
         }
     , turn = 0
-    , turnOrder = [ ( 0, player ), ( 1, Creature.new Goblin ) ]
+    , turnOrder = [ ( 0, player ), ( 1, Creature.new Goblin "" ) ]
     }
 
 
@@ -38,22 +38,24 @@ init player =
 
 
 type Msg
-    = PlayerAttack
+    = PlayerAttack Creature
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        PlayerAttack ->
+        PlayerAttack target ->
             let
                 player =
                     List.head (Tuple.second model.turnOrder)
 
                 playerAttackResult =
-                    Creature.attack player model.enemy
+                    case player of
+                        Creature ->
+                            Creature.attack player target
 
                 enemyAttackResult =
-                    Creature.attack playerAttackResult.victim playerAttackResult.attacker
+                    Creature.attack target player
 
                 playerTurn =
                     ( model.turn, playerAttackResult )
@@ -78,7 +80,6 @@ view model =
             [ showAllies model.characters.allies
             , showEnemies model.characters.enemies
             ]
-        , div [] [ button [ onClick PlayerAttack ] [ text "attack!" ] ]
         ]
 
 

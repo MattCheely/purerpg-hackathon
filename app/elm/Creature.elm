@@ -11,6 +11,7 @@ import Json.Encode as Encode exposing (object)
 
 type alias Creature =
     { creatureType : CreatureType
+    , player : String
     , hitPoints : Int
     }
 
@@ -21,9 +22,10 @@ type CreatureType
     | Wizard
 
 
-new : CreatureType -> Creature
-new creatureType =
+new : CreatureType -> String -> Creature
+new creatureType playerId =
     { creatureType = creatureType
+    , player = playerId
     , hitPoints = maxHp creatureType
     }
 
@@ -118,8 +120,9 @@ encode creature =
 
 decoder : Decoder Creature
 decoder =
-    Decode.map2 Creature
+    Decode.map3 Creature
         (Decode.field "creatureType" typeDecoder)
+        (Decode.field "player" Decode.string)
         (Decode.field "hitPoints" Decode.int)
 
 
