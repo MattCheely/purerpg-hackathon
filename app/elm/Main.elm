@@ -1,13 +1,16 @@
 module Main exposing (main)
 
+import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
+import InterOp
+import Json.Decode as Decode exposing (Value)
 
 
-main : Program Never Model Msg
+main : Program Value Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , update = update
         , view = view
@@ -19,7 +22,13 @@ main =
 -- Model
 
 
-type Model
+type alias Model =
+    { token : String
+    , appModel : AppModel
+    }
+
+
+type AppModel
     = SelectingCharacter
     | WithCharacter CombatModel
 
@@ -27,63 +36,43 @@ type Model
 type alias CombatModel =
     { character : Creature
     , enemy : Creature
-    , lastAttack : Maybe Attack
+    , turnActions : List Attack
     }
 
 
-type alias Creature =
-    { creatureType : CreatureType
-    , hitPoints : Int
-    }
+init : Value -> ( Model, Cmd Msg )
+init config =
+    let
+        token =
+            Decode.decodeValue (Decode.field "token" Decode.string) config
+                |> Result.withDefault "1234"
 
+        previousChar =
+            Decode.decodeValue (Decode.field "char" Creature.decoder) config
 
-type CreatureType
-    = Goblin
-    | Fighter
-    | Wizard
+        appModel =
+            case previousChar of
+                Ok character ->
+                    WithCharacter
+                        { character = character
+                        , enemy = Creature.new Goblin
+                        , turnActions = []
+                        }
 
-
-newCreature : CreatureType -> Creature
-newCreature creatureType =
-    { creatureType = creatureType
-    , hitPoints = maxHp creatureType
-    }
-
-
-maxHp : CreatureType -> Int
-maxHp class =
-    case class of
-        Wizard ->
-            6
-
-        Fighter ->
-            10
-
-        Goblin ->
-            5
-
-
-type alias Attack =
-    { attacker : Creature
-    , victim : Creature
-    , result : AttackResult
-    }
-
-
-type AttackResult
-    = Hit Int
-    | Miss
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( SelectingCharacter
+                Err msg ->
+                    SelectingCharacter
+    in
+    ( { token = token, appModel = appModel }
     , Cmd.none
     )
 
 
 
 -- Update
+
+
+userId =
+    "1234"
 
 
 type Msg
@@ -97,21 +86,34 @@ type CombatMsg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( model, msg ) of
+    let
+        ( appModel, cmd ) =
+            updateApp msg model.appModel
+    in
+    ( { model | appModel = appModel }, cmd )
+
+
+updateApp : Msg -> AppModel -> ( AppModel, Cmd Msg )
+updateApp msg appModel =
+    case ( appModel, msg ) of
         ( SelectingCharacter, CharacterSelected creatureType ) ->
+            let
+                char =
+                    Creature.new creatureType
+            in
             ( WithCharacter
-                { character = newCreature creatureType
-                , enemy = newCreature Goblin
-                , lastAttack = Nothing
+                { character = char
+                , enemy = Creature.new Goblin
+                , turnActions = []
                 }
-            , Cmd.none
+            , InterOp.saveCharacter userId char
             )
 
         ( WithCharacter combatModel, CombatEvent msg ) ->
             ( WithCharacter (updateCombat msg combatModel), Cmd.none )
 
         ( _, _ ) ->
-            Debug.log "Message & Model mismatch" ( model, Cmd.none )
+            Debug.log "Message & Model mismatch" ( appModel, Cmd.none )
 
 
 updateCombat : CombatMsg -> CombatModel -> CombatModel
@@ -119,34 +121,17 @@ updateCombat msg model =
     case msg of
         PlayerAttack ->
             let
-                attackResult =
-                    doAttack model.character model.enemy
+                playerAttackResult =
+                    Creature.attack model.character model.enemy
+
+                enemyAttackResult =
+                    Creature.attack playerAttackResult.victim playerAttackResult.attacker
             in
             { model
-                | character = attackResult.attacker
-                , enemy = attackResult.victim
-                , lastAttack = Just attackResult
+                | character = enemyAttackResult.victim
+                , enemy = enemyAttackResult.attacker
+                , turnActions = [ playerAttackResult, enemyAttackResult ]
             }
-
-
-doAttack : Creature -> Creature -> Attack
-doAttack attacker victim =
-    let
-        damage =
-            case attacker.creatureType of
-                Wizard ->
-                    4
-
-                Fighter ->
-                    2
-
-                Goblin ->
-                    1
-    in
-    { attacker = attacker
-    , victim = { victim | hitPoints = victim.hitPoints - damage }
-    , result = Hit damage
-    }
 
 
 
@@ -155,7 +140,7 @@ doAttack attacker victim =
 
 view : Model -> Html Msg
 view model =
-    case model of
+    case model.appModel of
         SelectingCharacter ->
             characterSelectionView
 
@@ -179,39 +164,13 @@ combatView : CombatModel -> Html Msg
 combatView model =
     div []
         [ div [ class "characterDisplay" ]
-            [ div [ class "characterStats" ] [ text (toString model.character.creatureType ++ " hp: " ++ toString model.character.hitPoints) ]
-            , div [ class "character" ] [ img [ src (creatureImg model.character.creatureType) ] [], creatureView model.character.creatureType ]
-            , div [ class "character" ] [ img [ src (creatureImg model.enemy.creatureType) ] [], creatureView model.enemy.creatureType ]
-            , div [ class "characterStats" ] [ text (toString model.enemy.creatureType ++ " hp: " ++ toString model.enemy.hitPoints) ]
+            [ div [ class "character" ] [ Creature.showSprite model.character ]
+            , div [ class "enemy" ] [ Creature.showSprite model.enemy ]
             ]
-        , div [] [ button [ class "attackButton", onClick (CombatEvent PlayerAttack) ] [ text "attack!" ] ]
+        , div
+            [ class "characterControl" ]
+            [ button [ class "attackButton", onClick (CombatEvent PlayerAttack) ] [ text "attack!" ] ]
         ]
-
-
-creatureView : CreatureType -> Html Msg
-creatureView creature =
-    case creature of
-        Wizard ->
-            text "You're a wizard, Harry!"
-
-        Fighter ->
-            text "Conan, what is best in life?!"
-
-        Goblin ->
-            text "Splork smash!"
-
-
-creatureImg : CreatureType -> String
-creatureImg class =
-    case class of
-        Wizard ->
-            "images/wizard.png"
-
-        Fighter ->
-            "images/fighter.png"
-
-        Goblin ->
-            "images/goblin.png"
 
 
 
