@@ -15,7 +15,7 @@
   "author": "You!",
   "license": "BSD3",
   "dependencies": {
-    "purecloud-client-app-sdk": "^1.0.0-beta.4"
+    "purecloud-client-app-sdk": "^1.0.0"
   },
   "devDependencies": {
     "auto-reload-brunch": "^2.7.1",

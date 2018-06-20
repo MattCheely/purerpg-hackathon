@@ -1,7 +1,6 @@
 port module InterOp exposing (..)
 
 import Creature exposing (Creature)
-import Json.Decode as Decode
 import Json.Encode as Encode exposing (Value)
 
 

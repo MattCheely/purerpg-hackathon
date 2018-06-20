@@ -52,11 +52,11 @@ init config =
             Decode.decodeValue (Decode.field "token" Decode.string) config
                 |> Result.withDefault "1234"
 
-        previousChar =
+        charDecodeResult =
             Decode.decodeValue (Decode.field "char" Creature.decoder) config
 
         appModel =
-            case previousChar of
+            case charDecodeResult of
                 Ok character ->
                     WithCharacter
                         { character = character

@@ -9,17 +9,27 @@ import Html.Events exposing (onClick)
 
 
 type alias Model =
-    { character : Creature
-    , enemy : Creature
-    , turnActions : List Attack
+    { turnHistory : List ( Int, Attack )
+    , players : List String
+    , characters :
+        { allies : List Creature
+        , enemies : List Creature
+        }
+    , turn : Int
+    , turnOrder : List ( Int, Creature )
     }
 
 
 init : Creature -> Model
 init player =
-    { character = player
-    , enemy = Creature.new Goblin
-    , turnActions = []
+    { turnHistory = []
+    , players = [ "1234" ]
+    , characters =
+        { allies = [ player ]
+        , enemies = [ Creature.new Goblin ]
+        }
+    , turn = 0
+    , turnOrder = [ ( 0, player ), ( 1, Creature.new Goblin ) ]
     }
 
 
@@ -36,16 +46,24 @@ update msg model =
     case msg of
         PlayerAttack ->
             let
+                player =
+                    List.head (Tuple.second model.turnOrder)
+
                 playerAttackResult =
-                    Creature.attack model.character model.enemy
+                    Creature.attack player model.enemy
 
                 enemyAttackResult =
                     Creature.attack playerAttackResult.victim playerAttackResult.attacker
+
+                playerTurn =
+                    ( model.turn, playerAttackResult )
+
+                enemyTurn =
+                    ( model.turn + 1, enemyAttackResult )
             in
             { model
-                | character = enemyAttackResult.victim
-                , enemy = enemyAttackResult.attacker
-                , turnActions = [ playerAttackResult, enemyAttackResult ]
+                | turn = model.turn + 2
+                , turnHistory = enemyTurn :: playerTurn :: model.turnHistory
             }
 
 
@@ -57,8 +75,28 @@ view : Model -> Html Msg
 view model =
     div []
         [ div []
-            [ Creature.showSprite model.character
-            , Creature.showSprite model.enemy
+            [ showAllies model.characters.allies
+            , showEnemies model.characters.enemies
             ]
         , div [] [ button [ onClick PlayerAttack ] [ text "attack!" ] ]
+        ]
+
+
+showEnemies : List Creature -> Html Msg
+showEnemies enemies =
+    div []
+        (List.map Creature.showSprite enemies)
+
+
+showAllies : List Creature -> Html Msg
+showAllies allies =
+    div []
+        (List.map Creature.showSprite allies)
+
+
+showEnemy : Creature -> Html Msg
+showEnemy enemy =
+    div []
+        [ Creature.showSprite enemy
+        , div [] [ button [ onClick PlayerAttack enemy ] [ text "attack!" ] ]
         ]
