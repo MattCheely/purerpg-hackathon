@@ -41,8 +41,8 @@ type Msg
     = PlayerAttack Creature
 
 
-update : Msg -> Model -> Model
-update msg model =
+update : Msg -> Model -> String -> Model
+update msg model user =
     case msg of
         PlayerAttack target ->
             let
@@ -50,9 +50,7 @@ update msg model =
                     List.head (Tuple.second model.turnOrder)
 
                 playerAttackResult =
-                    case player of
-                        Creature ->
-                            Creature.attack player target
+                    Creature.attack player target
 
                 enemyAttackResult =
                     Creature.attack target player
@@ -95,7 +93,7 @@ showAllies allies =
         (List.map Creature.showSprite allies)
 
 
-showEnemy : Creature -> Html Msg
+showEnemy : Creature -> Html Msg -> Creature
 showEnemy enemy =
     div []
         [ Creature.showSprite enemy
