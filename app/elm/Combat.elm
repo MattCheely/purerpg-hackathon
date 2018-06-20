@@ -14,15 +14,23 @@ import Random exposing (Seed, initialSeed)
 type alias Model =
     { character : Creature
     , enemy : Creature
+    , status : Status
     , turnActions : List Attack
     , randomSeed : Seed
     }
+
+
+type Status
+    = Victory
+    | Defeat
+    | Ongoing
 
 
 init : Creature -> Model
 init player =
     { character = player
     , enemy = Creature.new Goblin
+    , status = Ongoing
     , turnActions = []
     , randomSeed = initialSeed 1
     }
@@ -36,6 +44,16 @@ type Msg
     = PlayerAttack
 
 
+gameStatus : Attack -> Status
+gameStatus attack =
+    if attack.victim.hitPoints <= 0 then
+        Defeat
+    else if attack.attacker.hitPoints <= 0 then
+        Victory
+    else
+        Ongoing
+
+
 update : Msg -> Model -> Model
 update msg model =
     case msg of
@@ -46,10 +64,14 @@ update msg model =
 
                 ( enemyAttackResult, newSeed ) =
                     Creature.attack playerAttackResult.victim playerAttackResult.attacker seed
+
+                status =
+                    gameStatus enemyAttackResult
             in
             { model
                 | character = enemyAttackResult.victim
                 , enemy = enemyAttackResult.attacker
+                , status = status
                 , turnActions = [ playerAttackResult, enemyAttackResult ]
                 , randomSeed = newSeed
             }
@@ -61,6 +83,19 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
+    case model.status of
+        Victory ->
+            div [] [ text "Victory" ]
+
+        Defeat ->
+            div [] [ text "Defeat" ]
+
+        Ongoing ->
+            combat model
+
+
+combat : Model -> Html Msg
+combat model =
     div []
         [ div [ class "characterDisplay" ]
             [ div [ class "character" ] [ Creature.showSprite model.character ]
