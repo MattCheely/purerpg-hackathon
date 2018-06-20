@@ -1,4 +1,4 @@
-module Combat exposing (Model, Msg, init, update, view, encode)
+module Combat exposing (Model, Msg, encode, init, update, view)
 
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)
@@ -68,7 +68,9 @@ view model =
         ]
 
 
+
 -- Encode/Decode
+
 
 encode : Model -> Encode.Value
 encode model =
