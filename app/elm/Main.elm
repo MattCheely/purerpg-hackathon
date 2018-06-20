@@ -115,27 +115,28 @@ updateApp userId msg appModel =
             )
 
         ( WithCharacter adventureModel, AdventureEvent msg ) ->
-            ( WithCharacter (updateAdventure msg adventureModel), Cmd.none )
+            updateAdventure msg adventureModel
+                |> Tuple.mapFirst WithCharacter
 
         ( _, _ ) ->
             Debug.log "Message & Model mismatch" ( appModel, Cmd.none )
 
 
-updateAdventure : AdventureMsg -> AdventureModel -> AdventureModel
+updateAdventure : AdventureMsg -> AdventureModel -> ( AdventureModel, Cmd Msg )
 updateAdventure msg model =
     let
-        updatedRoute =
+        ( updatedRoute, cmd ) =
             case ( msg, model.route ) of
                 ( GoAdventure, CharacterView ) ->
-                    CombatView (Combat.init model.character)
+                    ( CombatView (Combat.init model.character), Cmd.none )
 
                 ( CombatEvent combatMsg, CombatView combatModel ) ->
-                    CombatView (Combat.update combatMsg combatModel)
+                    ( CombatView (Combat.update combatMsg combatModel), InterOp.saveCombat "asdf" combatModel )
 
                 ( _, _ ) ->
-                    model.route
+                    ( model.route, Cmd.none )
     in
-    { model | route = updatedRoute }
+    ( { model | route = updatedRoute }, cmd )
 
 
 

@@ -76,11 +76,19 @@ module.exports = {
 
     fromElm(blob) {
         try {
+            let { action } = blob;
 
-            if (blob.action === 'save') {
-                let character = blob.character;
+            if (action === 'saveCharacter') {
+                let { character } = blob;
                 character.userId = this.userId;
+
                 this.database.ref(`users/${this.userId}`).set(character);
+            }
+
+            if (action === 'saveCombat') {
+                let { combat, combatId } = blob;
+
+                this.database.ref(`combat/${combatId}`).set(combat);
             }
 
         } catch (error) {
