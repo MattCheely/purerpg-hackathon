@@ -2,7 +2,7 @@ module Combat exposing (Model, Msg, encode, init, update, view)
 
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, classList)
 import Html.Events exposing (onClick)
 import Json.Encode as Encode exposing (object)
 import List.Extra as ListX
@@ -206,7 +206,7 @@ combat model userId =
     div []
         [ div [ class "characterDisplay" ]
             [ div [ class "character" ] [ showAllies (getParty model) ]
-            , div [ class "enemy" ] [ showEnemies (getEnemies model) (isPlayerTurn model userId) ]
+            , div [ class "enemy faceLeft" ] [ showEnemies (getEnemies model) (isPlayerTurn model userId) ]
             ]
         ]
 
