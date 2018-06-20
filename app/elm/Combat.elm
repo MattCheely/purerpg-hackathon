@@ -4,6 +4,7 @@ import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
+import Random exposing (Seed, initialSeed)
 
 
 -- Model
@@ -13,6 +14,7 @@ type alias Model =
     { character : Creature
     , enemy : Creature
     , turnActions : List Attack
+    , randomSeed : Seed
     }
 
 
@@ -21,6 +23,7 @@ init player =
     { character = player
     , enemy = Creature.new Goblin
     , turnActions = []
+    , randomSeed = initialSeed 1
     }
 
 
@@ -37,16 +40,17 @@ update msg model =
     case msg of
         PlayerAttack ->
             let
-                playerAttackResult =
-                    Creature.attack model.character model.enemy
+                ( playerAttackResult, seed ) =
+                    Creature.attack model.character model.enemy model.randomSeed
 
-                enemyAttackResult =
-                    Creature.attack playerAttackResult.victim playerAttackResult.attacker
+                ( enemyAttackResult, newSeed ) =
+                    Creature.attack playerAttackResult.victim playerAttackResult.attacker seed
             in
             { model
                 | character = enemyAttackResult.victim
                 , enemy = enemyAttackResult.attacker
                 , turnActions = [ playerAttackResult, enemyAttackResult ]
+                , randomSeed = newSeed
             }
 
 

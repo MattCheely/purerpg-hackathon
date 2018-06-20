@@ -4,6 +4,7 @@ import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src, style)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode exposing (object)
+import Random exposing (Seed, step)
 
 
 -- Data
@@ -49,24 +50,29 @@ health creature =
         (toFloat creature.hitPoints / toFloat (maxHp creature.creatureType)) * 100
 
 
-attack : Creature -> Creature -> Attack
-attack attacker victim =
+attack : Creature -> Creature -> Seed -> ( Attack, Seed )
+attack attacker victim seed =
     let
-        damage =
+        damageGenerator =
             case attacker.creatureType of
                 Wizard ->
-                    4
+                    Random.int 0 4
 
                 Fighter ->
-                    2
+                    Random.int 0 2
 
                 Goblin ->
-                    1
+                    Random.int 0 1
+
+        ( damage, randomSeed ) =
+            step damageGenerator seed
     in
-    { attacker = attacker
-    , victim = { victim | hitPoints = victim.hitPoints - damage }
-    , result = Hit damage
-    }
+    ( { attacker = attacker
+      , victim = { victim | hitPoints = victim.hitPoints - damage }
+      , result = Hit damage
+      }
+    , randomSeed
+    )
 
 
 type alias Attack =
