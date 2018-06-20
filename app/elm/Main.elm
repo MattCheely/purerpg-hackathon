@@ -24,7 +24,8 @@ main =
 
 
 type alias Model =
-    { token : String
+    { userId: String
+    , token : String
     , appModel : AppModel
     }
 
@@ -48,6 +49,10 @@ type Route
 init : Value -> ( Model, Cmd Msg )
 init config =
     let
+        userId =
+            Decode.decodeValue (Decode.field "userId" Decode.string) config
+                |> Result.withDefault "1234"
+
         token =
             Decode.decodeValue (Decode.field "token" Decode.string) config
                 |> Result.withDefault "1234"
@@ -66,7 +71,7 @@ init config =
                 Err msg ->
                     SelectingCharacter
     in
-    ( { token = token, appModel = appModel }
+    ( { userId = userId, token = token, appModel = appModel }
     , Cmd.none
     )
 
@@ -74,10 +79,6 @@ init config =
 
 -- Update
 
-
-userId : String
-userId =
-    "1234"
 
 
 type Msg
@@ -94,13 +95,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         ( appModel, cmd ) =
-            updateApp msg model.appModel
+            updateApp model.userId msg model.appModel
     in
     ( { model | appModel = appModel }, cmd )
 
 
-updateApp : Msg -> AppModel -> ( AppModel, Cmd Msg )
-updateApp msg appModel =
+updateApp : String -> Msg -> AppModel -> ( AppModel, Cmd Msg )
+updateApp userId msg appModel =
     case ( appModel, msg ) of
         ( SelectingCharacter, CharacterSelected creatureType ) ->
             let
