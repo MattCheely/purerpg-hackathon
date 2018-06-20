@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Combat
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, img, text)
 import Html.Attributes exposing (class, src)
@@ -31,14 +32,18 @@ type alias Model =
 
 type AppModel
     = SelectingCharacter
-    | WithCharacter CombatModel
+    | WithCharacter AdventureModel
 
 
-type alias CombatModel =
+type alias AdventureModel =
     { character : Creature
-    , enemy : Creature
-    , turnActions : List Attack
+    , route : Route
     }
+
+
+type Route
+    = CharacterView
+    | CombatView Combat.Model
 
 
 init : Value -> ( Model, Cmd Msg )
@@ -60,8 +65,7 @@ init config =
                 Ok character ->
                     WithCharacter
                         { character = character
-                        , enemy = Creature.new Goblin
-                        , turnActions = []
+                        , route = CharacterView
                         }
 
                 Err msg ->
@@ -79,11 +83,12 @@ init config =
 
 type Msg
     = CharacterSelected CreatureType
-    | CombatEvent CombatMsg
+    | AdventureEvent AdventureMsg
 
 
-type CombatMsg
-    = PlayerAttack
+type AdventureMsg
+    = GoAdventure
+    | CombatEvent Combat.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -105,35 +110,33 @@ updateApp userId msg appModel =
             in
             ( WithCharacter
                 { character = char
-                , enemy = Creature.new Goblin
-                , turnActions = []
+                , route = CharacterView
                 }
             , InterOp.saveCharacter userId char
             )
 
-        ( WithCharacter combatModel, CombatEvent msg ) ->
-            ( WithCharacter (updateCombat msg combatModel), Cmd.none )
+        ( WithCharacter adventureModel, AdventureEvent msg ) ->
+            ( WithCharacter (updateAdventure msg adventureModel), Cmd.none )
 
         ( _, _ ) ->
             Debug.log "Message & Model mismatch" ( appModel, Cmd.none )
 
 
-updateCombat : CombatMsg -> CombatModel -> CombatModel
-updateCombat msg model =
-    case msg of
-        PlayerAttack ->
-            let
-                playerAttackResult =
-                    Creature.attack model.character model.enemy
+updateAdventure : AdventureMsg -> AdventureModel -> AdventureModel
+updateAdventure msg model =
+    let
+        updatedRoute =
+            case ( msg, model.route ) of
+                ( GoAdventure, CharacterView ) ->
+                    CombatView (Combat.init model.character)
 
-                enemyAttackResult =
-                    Creature.attack playerAttackResult.victim playerAttackResult.attacker
-            in
-            { model
-                | character = enemyAttackResult.victim
-                , enemy = enemyAttackResult.attacker
-                , turnActions = [ playerAttackResult, enemyAttackResult ]
-            }
+                ( CombatEvent combatMsg, CombatView combatModel ) ->
+                    CombatView (Combat.update combatMsg combatModel)
+
+                ( _, _ ) ->
+                    model.route
+    in
+    { model | route = updatedRoute }
 
 
 
@@ -146,8 +149,8 @@ view model =
         SelectingCharacter ->
             characterSelectionView
 
-        WithCharacter combatModel ->
-            combatView combatModel
+        WithCharacter adventureModel ->
+            adventureView adventureModel
 
 
 characterSelectionView : Html Msg
@@ -162,15 +165,24 @@ characterSelectionView =
         ]
 
 
-combatView : CombatModel -> Html Msg
-combatView model =
-    div []
-        [ div []
-            [ Creature.showSprite model.character
-            , Creature.showSprite model.enemy
-            ]
-        , div [] [ button [ onClick (CombatEvent PlayerAttack) ] [ text "attack!" ] ]
-        ]
+adventureView : AdventureModel -> Html Msg
+adventureView model =
+    case model.route of
+        CharacterView ->
+            div []
+                [ div [ class "actions" ]
+                    [ button [ onClick (AdventureEvent GoAdventure) ] [ text "Adventure!" ]
+                    , characterView model.character
+                    ]
+                ]
+
+        CombatView combatModel ->
+            Html.map (AdventureEvent << CombatEvent) (Combat.view combatModel)
+
+
+characterView : Creature -> Html Msg
+characterView character =
+    Creature.showSprite character
 
 
 
