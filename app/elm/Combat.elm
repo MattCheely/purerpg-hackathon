@@ -1,9 +1,10 @@
-module Combat exposing (Model, Msg, init, update, view)
+module Combat exposing (Model, Msg, init, update, view, encode)
 
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
+import Json.Encode as Encode exposing (object)
 
 
 -- Model
@@ -64,4 +65,14 @@ view model =
         , div
             [ class "characterControl" ]
             [ button [ class "attackButton", onClick PlayerAttack ] [ text "attack!" ] ]
+        ]
+
+
+-- Encode/Decode
+
+encode : Model -> Encode.Value
+encode model =
+    object
+        [ ( "character", Creature.encode model.character )
+        , ( "enemy", Creature.encode model.enemy )
         ]
