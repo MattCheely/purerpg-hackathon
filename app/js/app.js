@@ -11,20 +11,23 @@ module.exports = {
     userId: null,
     userName: null,
 
+    database: null,
+    characterModel: null,
+
     run() {
         Promise.resolve()
             .then(() => this.authToPurecloud())
             .then(() => this.loadPurecloudUser())
+            .then(() => this.connectToFirebase())
+            .then(() => this.loadGameUser())
             .then(() => {
-                let userId = "1234";
-                localForage.getItem(`forage.character.${userId}`).then(char => {   // load character data
-                    let config = {
-                        token: this.accessToken,
-                        char
-                    };
-                    let app = require('elm/Main.elm').Main.fullscreen(config);
-                    app.ports.toJs.subscribe(this.fromElm);
+                const app = require('elm/Main.elm').Main.fullscreen({
+                    userId: this.userId,
+                    token: this.accessToken,
+                    char: this.characterModel
                 });
+
+                app.ports.toJs.subscribe(this.fromElm.bind(this));
             });
     },
 
@@ -48,16 +51,40 @@ module.exports = {
             });
     },
 
+    connectToFirebase() {
+        firebase.initializeApp({
+            apiKey: "AIzaSyCMWIi0QW_YPG4uVTWMlKzq_61fJs-AHT8",
+            authDomain: "project-939081188532.firebaseapp.com",
+            databaseURL: "https://purerpg-65258.firebaseio.com/",
+            storageBucket: "bucket.appspot.com"
+        });
+
+        this.database = firebase.database();
+
+        return Promise.resolve();
+    },
+
+    loadGameUser() {
+        return this.database.ref(`/users/${this.userId}`).once('value')
+            .then(snapshot => {
+                this.characterModel = snapshot.val();
+            });
+    },
+
     toElm(userId) {
     },
 
     fromElm(blob) {
-        if (blob.action === 'save') {
-            // save to localForage
-            console.log(`save my character ${blob}`);
-            localForage.setItem(`forage.character.${blob.userId}`, blob.character);
-        } else if (blob.action === 'load') {
-            this.toElm(blob.userId);
+        try {
+
+            if (blob.action === 'save') {
+                let character = blob.character;
+                character.userId = this.userId;
+                this.database.ref(`users/${this.userId}`).set(character);
+            }
+
+        } catch (error) {
+            console.error(`caught error in port that would stop elm ${error}`);
         }
     }
 };
