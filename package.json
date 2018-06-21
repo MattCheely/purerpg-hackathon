@@ -17,7 +17,7 @@
   "license": "BSD3",
   "dependencies": {
     "firebase": "^5.0.4",
-    "purecloud-client-app-sdk": "^1.0.0-beta.4",
+    "purecloud-client-app-sdk": "^1.0.0",
     "stupid-server": "^0.2.2"
   },
   "devDependencies": {
