@@ -203,18 +203,24 @@ view userId model =
 
 combat : Model -> String -> Html Msg
 combat model userId =
+    let
+        playerType =
+            getCombatant model userId
+                |> Maybe.map .creatureType
+                |> Maybe.withDefault Fighter
+    in
     div []
         [ div [ class "characterDisplay" ]
             [ div [ class "character" ] [ showAllies (getParty model) ]
-            , div [ class "enemy faceLeft" ] [ showEnemies (getEnemies model) (isPlayerTurn model userId) ]
+            , div [ class "enemies faceLeft" ] [ showEnemies (getEnemies model) (isPlayerTurn model userId) playerType ]
             ]
         ]
 
 
-showEnemies : List Creature -> Bool -> Html Msg
-showEnemies enemies isPlayerTurn =
+showEnemies : List Creature -> Bool -> CreatureType -> Html Msg
+showEnemies enemies isPlayerTurn playerType =
     div []
-        (List.map (showEnemy isPlayerTurn) enemies)
+        (List.map (showEnemy isPlayerTurn playerType) enemies)
 
 
 showAllies : List Creature -> Html Msg
@@ -223,17 +229,24 @@ showAllies allies =
         (List.map Creature.showSprite allies)
 
 
-showEnemy : Bool -> Creature -> Html Msg
-showEnemy isPlayerTurn enemy =
-    div []
-        [ Creature.showSprite enemy
-        , div []
-            [ if isPlayerTurn then
-                button [ onClick (PlayerAttack enemy.id) ] [ text "attack!" ]
-              else
-                text ""
-            ]
-        ]
+showEnemy : Bool -> CreatureType -> Creature -> Html Msg
+showEnemy isPlayerTurn playerType enemy =
+    let
+        attackClass =
+            case playerType of
+                Wizard ->
+                    "spellAttack"
+
+                _ ->
+                    "weaponAttack"
+
+        baseElement =
+            if isPlayerTurn then
+                button [ class ("enemy " ++ attackClass), onClick (PlayerAttack enemy.id) ]
+            else
+                div [ class "enemy" ]
+    in
+    baseElement [ Creature.showSprite enemy ]
 
 
 
