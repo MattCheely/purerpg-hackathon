@@ -83,11 +83,11 @@ body {
 }
 
 .spellAttack {
-    cursor: url(/images/lightning.png), auto;
+    cursor: url(../images/lightning.png), auto;
 }
 
 .weaponAttack {
-    cursor: url(/images/sword.png), auto;
+    cursor: url(../images/sword.png), auto;
 }
 
 .wasHit {

@@ -1,17 +1,30 @@
 Arguments: 
-  /usr/local/bin/node /usr/local/Cellar/yarn/1.2.0/libexec/bin/yarn.js install
+  /usr/bin/node /usr/bin/yarn install
 
 PATH: 
-  /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+  /home/matt/.opam/system/bin:/home/matt/bin:/home/matt/.node_modules/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl
 
 Yarn version: 
-  1.2.0
+  1.7.0
 
 Node version: 
-  9.3.0
+  10.4.1
 
 Platform: 
-  darwin x64
+  linux x64
+
+Trace: 
+  Error: https://purecloud.artifactoryonline.com/purecloud/api/npm/inin-internal-npm/pem/-/pem-1.12.5.tgz?dl=https://registry.yarnpkg.com/pem/-/pem-1.12.5.tgz: Request failed "401 Unauthorized"
+      at ResponseError.ExtendableBuiltin (/usr/lib/node_modules/yarn/lib/cli.js:218:66)
+      at new ResponseError (/usr/lib/node_modules/yarn/lib/cli.js:324:124)
+      at Request.<anonymous> (/usr/lib/node_modules/yarn/lib/cli.js:62463:26)
+      at Request.emit (events.js:182:13)
+      at Request.module.exports.Request.onRequestResponse (/usr/lib/node_modules/yarn/lib/cli.js:135561:10)
+      at ClientRequest.emit (events.js:182:13)
+      at HTTPParser.parserOnIncomingClient (_http_client.js:546:21)
+      at HTTPParser.parserOnHeadersComplete (_http_common.js:109:17)
+      at TLSSocket.socketOnData (_http_client.js:432:20)
+      at TLSSocket.emit (events.js:182:13)
 
 npm manifest: 
   {
@@ -2965,16 +2978,3 @@ Lockfile:
       string-width "^1.0.1"
       window-size "^0.1.4"
       y18n "^3.2.0"
-
-Trace: 
-  Error: https://purecloud.artifactoryonline.com/purecloud/api/npm/inin-internal-npm/stupid-server/-/stupid-server-0.2.2.tgz?dl=https://registry.yarnpkg.com/stupid-server/-/stupid-server-0.2.2.tgz: Request failed "401 Unauthorized"
-      at Request.<anonymous> (/usr/local/Cellar/yarn/1.2.0/libexec/lib/cli.js:59218:26)
-      at Request.emit (events.js:159:13)
-      at Request.module.exports.Request.onRequestResponse (/usr/local/Cellar/yarn/1.2.0/libexec/lib/cli.js:123806:10)
-      at ClientRequest.emit (events.js:159:13)
-      at HTTPParser.parserOnIncomingClient (_http_client.js:550:21)
-      at HTTPParser.parserOnHeadersComplete (_http_common.js:115:23)
-      at TLSSocket.socketOnData (_http_client.js:439:20)
-      at TLSSocket.emit (events.js:159:13)
-      at addChunk (_stream_readable.js:265:12)
-      at readableAddChunk (_stream_readable.js:252:11)
