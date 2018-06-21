@@ -1,50 +1,98 @@
-// import localForage from "localforage"
+const firebase = require('firebase');
+const localForage = require('localforage');
+const platformClient = window.require('platformClient');
 
 module.exports = {
-    run: function () {
-        console.log("Javascript is still available.");
+    purecloudEnvironment: 'inindca.com',
+    purecloudClientId: '9d029f54-f3df-43b8-a6b0-0c06cced3e96',
+    appRedirectUri: `${window.location.origin}${window.location.pathname}`,
 
-        // check for auth token
-        var tokenIndex = window.location.href.indexOf('access_token');
-        var purecloudToken = null;
+    accessToken: null,
+    userId: null,
+    userName: null,
 
-        if (tokenIndex !== -1) purecloudToken = window.location.href.substring(tokenIndex + 13, window.location.href.indexOf('&'));
+    database: null,
+    characterModel: null,
 
+    run() {
+        Promise.resolve()
+            .then(() => this.authToPurecloud())
+            .then(() => this.loadPurecloudUser())
+            .then(() => this.connectToFirebase())
+            .then(() => this.loadGameUser())
+            .then(() => {
+                const app = require('elm/Main.elm').Main.fullscreen({
+                    userId: this.userId,
+                    token: this.accessToken,
+                    char: this.characterModel
+                });
 
-        const redirectUri = `${window.location.origin}${window.location.pathname}`;
-        const platformClient = window.require('platformClient');
-        const environment = 'inindca.com';
-        const clientId = '9d029f54-f3df-43b8-a6b0-0c06cced3e96';
-        var client = platformClient.ApiClient.instance;
-        client.setEnvironment(environment);
-
-        if (!purecloudToken) {  // go to OAuth
-            return client.loginImplicitGrant(clientId, redirectUri);
-        } else {  // token exists, validate & move into Elm
-            var lf = require('localforage');
-            var userId = "1234";
-            lf.getItem(`forage.character.${userId}`).then( (char) => {   // load character data
-                var config = {
-                    token: purecloudToken,
-                    char
-                }
-                var app = require('elm/Main.elm').Main.fullscreen(config);
-                app.ports.toJs.subscribe(this.fromElm);
+                app.ports.toJs.subscribe(this.fromElm.bind(this));
             });
-        }
     },
 
-    toElm: function (userId) {
+    authToPurecloud() {
+        const client = platformClient.ApiClient.instance;
+
+        client.setEnvironment(this.purecloudEnvironment);
+        client.setPersistSettings(true, 'optional_prefix');
+
+        return client
+            .loginImplicitGrant(this.purecloudClientId, this.appRedirectUri)
+            .then(({accessToken}) =>
+                this.accessToken = accessToken);
     },
 
-    fromElm: function (blob) {
-        if (blob.action === 'save') {
-            // save to localForage
-            var lf = require('localforage');
-            console.log(`save my character ${blob}`);
-            lf.setItem(`forage.character.${blob.userId}`, blob.character)
-        } else if (blob.action === 'load') {
-            this.toElm(blob.userId)
+    loadPurecloudUser() {
+        return new platformClient.UsersApi().getUsersMe()
+            .then(userModel => {
+                this.userId = userModel.id;
+                this.userName = userModel.name;
+            });
+    },
+
+    connectToFirebase() {
+        firebase.initializeApp({
+            apiKey: "AIzaSyCMWIi0QW_YPG4uVTWMlKzq_61fJs-AHT8",
+            authDomain: "project-939081188532.firebaseapp.com",
+            databaseURL: "https://purerpg-65258.firebaseio.com/",
+            storageBucket: "bucket.appspot.com"
+        });
+
+        this.database = firebase.database();
+
+        return Promise.resolve();
+    },
+
+    loadGameUser() {
+        return this.database.ref(`/users/${this.userId}`).once('value')
+            .then(snapshot => {
+                this.characterModel = snapshot.val();
+            });
+    },
+
+    toElm(userId) {
+    },
+
+    fromElm(blob) {
+        try {
+            let { action } = blob;
+
+            if (action === 'saveCharacter') {
+                let { character } = blob;
+                character.userId = this.userId;
+
+                this.database.ref(`users/${this.userId}`).set(character);
+            }
+
+            if (action === 'saveCombat') {
+                let { combat, combatId } = blob;
+
+                this.database.ref(`combat/${combatId}`).set(combat);
+            }
+
+        } catch (error) {
+            console.error(`caught error in port that would stop elm ${error}`);
         }
     }
 };

@@ -24,7 +24,8 @@ main =
 
 
 type alias Model =
-    { token : String
+    { userId : String
+    , token : String
     , appModel : AppModel
     }
 
@@ -48,6 +49,10 @@ type Route
 init : Value -> ( Model, Cmd Msg )
 init config =
     let
+        userId =
+            Decode.decodeValue (Decode.field "userId" Decode.string) config
+                |> Result.withDefault "1234"
+
         token =
             Decode.decodeValue (Decode.field "token" Decode.string) config
                 |> Result.withDefault "1234"
@@ -66,18 +71,13 @@ init config =
                 Err msg ->
                     SelectingCharacter
     in
-    ( { token = token, appModel = appModel }
+    ( { userId = userId, token = token, appModel = appModel }
     , Cmd.none
     )
 
 
 
 -- Update
-
-
-userId : String
-userId =
-    "1234"
 
 
 type Msg
@@ -94,13 +94,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         ( appModel, cmd ) =
-            updateApp msg model.appModel
+            updateApp model.userId msg model.appModel
     in
     ( { model | appModel = appModel }, cmd )
 
 
-updateApp : Msg -> AppModel -> ( AppModel, Cmd Msg )
-updateApp msg appModel =
+updateApp : String -> Msg -> AppModel -> ( AppModel, Cmd Msg )
+updateApp userId msg appModel =
     case ( appModel, msg ) of
         ( SelectingCharacter, CharacterSelected creatureType ) ->
             let
@@ -115,27 +115,28 @@ updateApp msg appModel =
             )
 
         ( WithCharacter adventureModel, AdventureEvent msg ) ->
-            ( WithCharacter (updateAdventure msg adventureModel), Cmd.none )
+            updateAdventure userId msg adventureModel
+                |> Tuple.mapFirst WithCharacter
 
         ( _, _ ) ->
             Debug.log "Message & Model mismatch" ( appModel, Cmd.none )
 
 
-updateAdventure : AdventureMsg -> AdventureModel -> AdventureModel
-updateAdventure msg model =
+updateAdventure : String -> AdventureMsg -> AdventureModel -> ( AdventureModel, Cmd Msg )
+updateAdventure userId msg model =
     let
-        updatedRoute =
+        ( updatedRoute, cmd ) =
             case ( msg, model.route ) of
                 ( GoAdventure, CharacterView ) ->
-                    CombatView (Combat.init model.character)
+                    ( CombatView (Combat.init model.character), Cmd.none )
 
                 ( CombatEvent combatMsg, CombatView combatModel ) ->
-                    CombatView (Combat.update combatMsg combatModel userId)
+                    ( CombatView (Combat.update combatMsg combatModel userId), InterOp.saveCombat "asdf" combatModel )
 
                 ( _, _ ) ->
-                    model.route
+                    ( model.route, Cmd.none )
     in
-    { model | route = updatedRoute }
+    ( { model | route = updatedRoute }, cmd )
 
 
 
@@ -149,7 +150,7 @@ view model =
             characterSelectionView
 
         WithCharacter adventureModel ->
-            adventureView adventureModel
+            adventureView model.userId adventureModel
 
 
 characterSelectionView : Html Msg
@@ -164,8 +165,8 @@ characterSelectionView =
         ]
 
 
-adventureView : AdventureModel -> Html Msg
-adventureView model =
+adventureView : String -> AdventureModel -> Html Msg
+adventureView userId model =
     case model.route of
         CharacterView ->
             div []

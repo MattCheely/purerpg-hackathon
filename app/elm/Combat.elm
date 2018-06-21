@@ -1,9 +1,12 @@
-module Combat exposing (Model, Msg, init, update, view)
+module Combat exposing (Model, Msg, encode, init, update, view)
 
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
+import Json.Encode as Encode exposing (object)
 import List.Extra as ListX
+import Random exposing (Seed, initialSeed)
 
 
 -- Model
@@ -14,15 +17,25 @@ type alias Model =
     , party : List String
     , turn : Int
     , turnOrder : List Creature
+    , status : Status
+    , randomSeed : Seed
     }
+
+
+type Status
+    = Victory
+    | Defeat
+    | Ongoing
 
 
 init : Creature -> Model
 init player =
     { turnHistory = []
-    , party = [ "1234" ]
+    , party = [ player.id ]
     , turn = 0
     , turnOrder = [ player, Creature.new Goblin "" ]
+    , status = Ongoing
+    , randomSeed = initialSeed 1
     }
 
 
@@ -83,17 +96,39 @@ type Msg
     = PlayerAttack String
 
 
+gameStatus : Model -> String -> Status
+gameStatus model userId =
+    let
+        playerChar =
+            getCombatant model userId
+
+        enemies =
+            getEnemies model
+    in
+    case playerChar of
+        Just player ->
+            if player.hitPoints <= 0 then
+                Defeat
+            else if List.all (\enemy -> enemy.hitPoints <= 0) enemies then
+                Victory
+            else
+                Ongoing
+
+        Nothing ->
+            Defeat
+
+
 update : Msg -> Model -> String -> Model
 update msg model userId =
     case msg of
         PlayerAttack targetId ->
             -- Handle the player's attack action, then handle any subsequent NPC turns.
-            handleAttack userId targetId model
-                |> doNPCAttacks
+            handleAttack userId userId targetId model
+                |> doNPCAttacks userId
 
 
-doNPCAttacks : Model -> Model
-doNPCAttacks model =
+doNPCAttacks : String -> Model -> Model
+doNPCAttacks userId model =
     let
         upcomingNPCs =
             {- To get the NPCs that are up next, we have to start from the current turn
@@ -106,17 +141,17 @@ doNPCAttacks model =
                 |> ListX.takeWhile Creature.isNPC
     in
     -- Keep updating the model with NPC attacks for all of the upcoming NPCs
-    List.foldl doNPCAttack model upcomingNPCs
+    List.foldl (doNPCAttack userId userId) model upcomingNPCs
 
 
-doNPCAttack : Creature -> Model -> Model
-doNPCAttack creature model =
+doNPCAttack : String -> String -> Creature -> Model -> Model
+doNPCAttack userId victimId creature model =
     -- TODO: Randomly select a player
-    handleAttack creature.id "1234" model
+    handleAttack userId creature.id victimId model
 
 
-handleAttack : String -> String -> Model -> Model
-handleAttack attackerId victimId model =
+handleAttack : String -> String -> String -> Model -> Model
+handleAttack userId attackerId victimId model =
     let
         foundAttacker =
             getCombatant model attackerId
@@ -127,17 +162,22 @@ handleAttack attackerId victimId model =
     case ( foundAttacker, foundVictim ) of
         ( Just attacker, Just victim ) ->
             let
-                attackResult =
-                    Creature.attack attacker victim
+                ( attackResult, newSeed ) =
+                    Creature.attack attacker victim model.randomSeed
 
                 modelWithDamage =
                     model
                         |> updateCombatant attackResult.attacker
                         |> updateCombatant attackResult.victim
+
+                status =
+                    gameStatus modelWithDamage userId
             in
             { modelWithDamage
                 | turn = (model.turn + 1) % List.length model.turnOrder
                 , turnHistory = attackResult :: model.turnHistory
+                , randomSeed = newSeed
+                , status = status
             }
 
         ( _, _ ) ->
@@ -150,10 +190,23 @@ handleAttack attackerId victimId model =
 
 view : String -> Model -> Html Msg
 view userId model =
+    case model.status of
+        Victory ->
+            div [] [ text "Victory" ]
+
+        Defeat ->
+            div [] [ text "Defeat" ]
+
+        Ongoing ->
+            combat model userId
+
+
+combat : Model -> String -> Html Msg
+combat model userId =
     div []
-        [ div []
-            [ showAllies (getParty model)
-            , showEnemies (getEnemies model) (isPlayerTurn model userId)
+        [ div [ class "characterDisplay" ]
+            [ div [ class "character" ] [ showAllies (getParty model) ]
+            , div [ class "enemy" ] [ showEnemies (getEnemies model) (isPlayerTurn model userId) ]
             ]
         ]
 
@@ -181,3 +234,13 @@ showEnemy isPlayerTurn enemy =
                 text ""
             ]
         ]
+
+
+
+-- Encode/Decode
+
+
+encode : Model -> Encode.Value
+encode model =
+    object
+        []

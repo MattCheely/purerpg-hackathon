@@ -13,9 +13,10 @@ module Creature
         )
 
 import Html exposing (Html, div, img, text)
-import Html.Attributes exposing (class, src)
+import Html.Attributes exposing (class, src, style)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode exposing (object)
+import Random exposing (Seed, step)
 
 
 -- Data
@@ -65,24 +66,37 @@ maxHp class =
             5
 
 
-attack : Creature -> Creature -> Attack
-attack attacker victim =
+health : Creature -> Float
+health creature =
+    if creature.hitPoints < 0 then
+        0
+    else
+        (toFloat creature.hitPoints / toFloat (maxHp creature.creatureType)) * 100
+
+
+attack : Creature -> Creature -> Seed -> ( Attack, Seed )
+attack attacker victim seed =
     let
-        damage =
+        damageGenerator =
             case attacker.creatureType of
                 Wizard ->
-                    4
+                    Random.int 0 4
 
                 Fighter ->
-                    2
+                    Random.int 0 2
 
                 Goblin ->
-                    1
+                    Random.int 0 1
+
+        ( damage, randomSeed ) =
+            step damageGenerator seed
     in
-    { attacker = attacker
-    , victim = { victim | hitPoints = victim.hitPoints - damage }
-    , result = Hit damage
-    }
+    ( { attacker = attacker
+      , victim = { victim | hitPoints = victim.hitPoints - damage }
+      , result = Hit damage
+      }
+    , randomSeed
+    )
 
 
 type alias Attack =
@@ -103,14 +117,14 @@ type AttackResult
 
 showSprite : Creature -> Html msg
 showSprite creature =
-    div []
+    div [ class "creature" ]
         [ img [ src (creatureImg creature.creatureType) ] []
-        , div []
-            [ text
-                (toString creature.creatureType
-                    ++ " hp: "
-                    ++ toString creature.hitPoints
-                )
+        , div [ class "creatureStats" ]
+            [ img [ class "hpImage", src "images/hp.png" ] []
+            , div
+                [ class "progressBar" ]
+                [ div [ class "progress", style [ ( "width", toString (health creature) ++ "%" ) ] ] []
+                ]
             ]
         ]
 
