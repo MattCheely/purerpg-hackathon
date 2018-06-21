@@ -1,4 +1,16 @@
-module Creature exposing (Attack, Creature, CreatureType(..), attack, decoder, encode, isSame, new, showSprite)
+module Creature
+    exposing
+        ( Attack
+        , Creature
+        , CreatureType(..)
+        , attack
+        , decoder
+        , encode
+        , isNPC
+        , isSame
+        , new
+        , showSprite
+        )
 
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
@@ -33,6 +45,11 @@ new creatureType id =
     , id = id
     , hitPoints = maxHp creatureType
     }
+
+
+isNPC : Creature -> Bool
+isNPC creature =
+    creature.creatureType == Goblin
 
 
 maxHp : CreatureType -> Int
