@@ -1,4 +1,4 @@
-module Combat exposing (Model, Msg, encode, init, update, view)
+module Combat exposing (Model, Msg, Status(..), encode, init, update, view)
 
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)

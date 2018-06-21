@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Combat
+import Combat exposing (Status(..))
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, img, text)
 import Html.Attributes exposing (class, src)
@@ -131,7 +131,14 @@ updateAdventure userId msg model =
                     ( CombatView (Combat.init model.character), Cmd.none )
 
                 ( CombatEvent combatMsg, CombatView combatModel ) ->
-                    ( CombatView (Combat.update combatMsg combatModel userId), InterOp.saveCombat "asdf" combatModel )
+                    let
+                        newModel =
+                            Combat.update combatMsg combatModel userId
+                    in
+                    if newModel.status == Victory then
+                        ( CombatView newModel, InterOp.showAchievement )
+                    else
+                        ( CombatView newModel, InterOp.saveCombat "asdf" combatModel )
 
                 ( _, _ ) ->
                     ( model.route, Cmd.none )
