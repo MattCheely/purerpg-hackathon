@@ -87,6 +87,7 @@ update : Msg -> Model -> String -> Model
 update msg model userId =
     case msg of
         PlayerAttack targetId ->
+            -- Handle the player's attack action, then handle any subsequent NPC turns.
             handleAttack userId targetId model
                 |> doNPCAttacks
 
@@ -94,14 +95,18 @@ update msg model userId =
 doNPCAttacks : Model -> Model
 doNPCAttacks model =
     let
-        upcomingEnemies =
+        upcomingNPCs =
+            {- To get the NPCs that are up next, we have to start from the current turn
+               but also wrap around the list in case we go past the end without hitting a PC
+            -}
             List.concat
                 [ List.drop model.turn model.turnOrder
                 , List.take model.turn model.turnOrder
                 ]
                 |> ListX.takeWhile Creature.isNPC
     in
-    List.foldl doNPCAttack model upcomingEnemies
+    -- Keep updating the model with NPC attacks for all of the upcoming NPCs
+    List.foldl doNPCAttack model upcomingNPCs
 
 
 doNPCAttack : Creature -> Model -> Model
