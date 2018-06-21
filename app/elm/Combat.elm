@@ -11,11 +11,7 @@ import List.Extra as ListX
 
 type alias Model =
     { turnHistory : List Attack
-    , players : List String
-    , characters :
-        { allies : List Creature
-        , enemies : List Creature
-        }
+    , party : List String
     , turn : Int
     , turnOrder : List Creature
     }
@@ -24,24 +20,33 @@ type alias Model =
 init : Creature -> Model
 init player =
     { turnHistory = []
-    , players = [ "1234" ]
-    , characters =
-        { allies = [ player ]
-        , enemies = [ Creature.new Goblin "" ]
-        }
+    , party = [ "1234" ]
     , turn = 0
     , turnOrder = [ player, Creature.new Goblin "" ]
     }
 
 
-getPlayerCharacter : Model -> String -> Maybe Creature
-getPlayerCharacter model userId =
-    model.characters.allies
+getCombatant : Model -> String -> Maybe Creature
+getCombatant model id =
+    model.turnOrder
         |> List.filter
-            (\character ->
-                character.id == userId
+            (\combatant ->
+                combatant.id == id
             )
         |> List.head
+
+
+updateCombatant : Creature -> Model -> Model
+updateCombatant combatant model =
+    { model
+        | turnOrder =
+            ListX.replaceIf
+                (\creature ->
+                    creature.id == combatant.id
+                )
+                combatant
+                model.turnOrder
+    }
 
 
 activeCreatureId : Model -> Maybe String
@@ -55,49 +60,88 @@ isPlayerTurn model userId =
     activeCreatureId model == Just userId
 
 
+inParty : Model -> Creature -> Bool
+inParty model creature =
+    List.member creature.id model.party
+
+
+getParty : Model -> List Creature
+getParty model =
+    List.filter (inParty model) model.turnOrder
+
+
+getEnemies : Model -> List Creature
+getEnemies model =
+    List.filter (not << inParty model) model.turnOrder
+
+
 
 -- Update
 
 
 type Msg
-    = PlayerAttack Creature
+    = PlayerAttack String
 
 
 update : Msg -> Model -> String -> Model
 update msg model userId =
     case msg of
-        PlayerAttack target ->
+        PlayerAttack targetId ->
+            -- Handle the player's attack action, then handle any subsequent NPC turns.
+            handleAttack userId targetId model
+                |> doNPCAttacks
+
+
+doNPCAttacks : Model -> Model
+doNPCAttacks model =
+    let
+        upcomingNPCs =
+            {- To get the NPCs that are up next, we have to start from the current turn
+               but also wrap around the list in case we go past the end without hitting a PC
+            -}
+            List.concat
+                [ List.drop model.turn model.turnOrder
+                , List.take model.turn model.turnOrder
+                ]
+                |> ListX.takeWhile Creature.isNPC
+    in
+    -- Keep updating the model with NPC attacks for all of the upcoming NPCs
+    List.foldl doNPCAttack model upcomingNPCs
+
+
+doNPCAttack : Creature -> Model -> Model
+doNPCAttack creature model =
+    -- TODO: Randomly select a player
+    handleAttack creature.id "1234" model
+
+
+handleAttack : String -> String -> Model -> Model
+handleAttack attackerId victimId model =
+    let
+        foundAttacker =
+            getCombatant model attackerId
+
+        foundVictim =
+            getCombatant model victimId
+    in
+    case ( foundAttacker, foundVictim ) of
+        ( Just attacker, Just victim ) ->
             let
-                foundCharacter =
-                    getPlayerCharacter model userId
+                attackResult =
+                    Creature.attack attacker victim
+
+                modelWithDamage =
+                    model
+                        |> updateCombatant attackResult.attacker
+                        |> updateCombatant attackResult.victim
             in
-            case foundCharacter of
-                Just player ->
-                    let
-                        playerAttackResult =
-                            Creature.attack player target
+            { modelWithDamage
+                | turn = (model.turn + 1) % List.length model.turnOrder
+                , turnHistory = attackResult :: model.turnHistory
+            }
 
-                        updatedEnemies =
-                            ListX.updateIf
-                                --currying
-                                (Creature.isSame target)
-                                (\_ -> playerAttackResult.victim)
-                                model.characters.enemies
-
-                        characters =
-                            model.characters
-
-                        updatedCharacters =
-                            { characters | enemies = updatedEnemies }
-                    in
-                    { model
-                        | turn = (model.turn + 1) % List.length model.turnOrder
-                        , turnHistory = playerAttackResult :: model.turnHistory
-                        , characters = updatedCharacters
-                    }
-
-                Nothing ->
-                    Debug.log "Uh, where's your character, dude?" model
+        ( _, _ ) ->
+            Debug.log "Who you attacking bro?" model
 
 
 
@@ -108,8 +152,8 @@ view : String -> Model -> Html Msg
 view userId model =
     div []
         [ div []
-            [ showAllies model.characters.allies
-            , showEnemies model.characters.enemies (isPlayerTurn model userId)
+            [ showAllies (getParty model)
+            , showEnemies (getEnemies model) (isPlayerTurn model userId)
             ]
         ]
 
@@ -132,7 +176,7 @@ showEnemy isPlayerTurn enemy =
         [ Creature.showSprite enemy
         , div []
             [ if isPlayerTurn then
-                button [ onClick (PlayerAttack enemy) ] [ text "attack!" ]
+                button [ onClick (PlayerAttack enemy.id) ] [ text "attack!" ]
               else
                 text ""
             ]
