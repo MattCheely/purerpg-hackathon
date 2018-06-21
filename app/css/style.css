@@ -75,6 +75,21 @@ body {
     transform: scaleX(-1);
 }
 
+.enemy {
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+.spellAttack {
+    cursor: url(/images/lightning.png), auto;
+}
+
+.weaponAttack {
+    cursor: url(/images/sword.png), auto;
+}
+
 .wasHit {
     /* Start the shake animation and make the animation last for 0.5 seconds */
     animation: shake 0.5s;
