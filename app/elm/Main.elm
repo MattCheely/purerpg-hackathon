@@ -105,7 +105,7 @@ updateApp msg appModel =
         ( SelectingCharacter, CharacterSelected creatureType ) ->
             let
                 char =
-                    Creature.new creatureType appModel.token
+                    Creature.new creatureType userId
             in
             ( WithCharacter
                 { character = char
@@ -130,7 +130,7 @@ updateAdventure msg model =
                     CombatView (Combat.init model.character)
 
                 ( CombatEvent combatMsg, CombatView combatModel ) ->
-                    CombatView (Combat.update combatMsg combatModel)
+                    CombatView (Combat.update combatMsg combatModel userId)
 
                 ( _, _ ) ->
                     model.route
@@ -176,7 +176,7 @@ adventureView model =
                 ]
 
         CombatView combatModel ->
-            Html.map (AdventureEvent << CombatEvent) (Combat.view combatModel)
+            Html.map (AdventureEvent << CombatEvent) (Combat.view userId combatModel)
 
 
 characterView : Creature -> Html Msg
