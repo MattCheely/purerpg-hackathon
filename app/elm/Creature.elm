@@ -1,4 +1,4 @@
-module Creature exposing (Attack, Creature, CreatureType(..), attack, decoder, encode, new, showSprite)
+module Creature exposing (Attack, Creature, CreatureType(..), attack, decoder, encode, isSame, new, showSprite)
 
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
@@ -11,9 +11,14 @@ import Json.Encode as Encode exposing (object)
 
 type alias Creature =
     { creatureType : CreatureType
-    , player : String
+    , id : String
     , hitPoints : Int
     }
+
+
+isSame : Creature -> Creature -> Bool
+isSame c1 c2 =
+    c1.id == c2.id
 
 
 type CreatureType
@@ -23,9 +28,9 @@ type CreatureType
 
 
 new : CreatureType -> String -> Creature
-new creatureType playerId =
+new creatureType id =
     { creatureType = creatureType
-    , player = playerId
+    , id = id
     , hitPoints = maxHp creatureType
     }
 
