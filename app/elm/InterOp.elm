@@ -2,7 +2,6 @@ port module InterOp exposing (..)
 
 import Combat
 import Creature exposing (Creature)
-import Json.Decode as Decode
 import Json.Encode as Encode exposing (Value)
 
 

@@ -57,11 +57,11 @@ init config =
             Decode.decodeValue (Decode.field "token" Decode.string) config
                 |> Result.withDefault "1234"
 
-        previousChar =
+        charDecodeResult =
             Decode.decodeValue (Decode.field "char" Creature.decoder) config
 
         appModel =
-            case previousChar of
+            case charDecodeResult of
                 Ok character ->
                     WithCharacter
                         { character = character
@@ -105,7 +105,7 @@ updateApp userId msg appModel =
         ( SelectingCharacter, CharacterSelected creatureType ) ->
             let
                 char =
-                    Creature.new creatureType
+                    Creature.new creatureType userId
             in
             ( WithCharacter
                 { character = char
@@ -115,15 +115,15 @@ updateApp userId msg appModel =
             )
 
         ( WithCharacter adventureModel, AdventureEvent msg ) ->
-            updateAdventure msg adventureModel
+            updateAdventure userId msg adventureModel
                 |> Tuple.mapFirst WithCharacter
 
         ( _, _ ) ->
             Debug.log "Message & Model mismatch" ( appModel, Cmd.none )
 
 
-updateAdventure : AdventureMsg -> AdventureModel -> ( AdventureModel, Cmd Msg )
-updateAdventure msg model =
+updateAdventure : String -> AdventureMsg -> AdventureModel -> ( AdventureModel, Cmd Msg )
+updateAdventure userId msg model =
     let
         ( updatedRoute, cmd ) =
             case ( msg, model.route ) of
@@ -131,7 +131,7 @@ updateAdventure msg model =
                     ( CombatView (Combat.init model.character), Cmd.none )
 
                 ( CombatEvent combatMsg, CombatView combatModel ) ->
-                    ( CombatView (Combat.update combatMsg combatModel), InterOp.saveCombat "asdf" combatModel )
+                    ( CombatView (Combat.update combatMsg combatModel userId), InterOp.saveCombat "asdf" combatModel )
 
                 ( _, _ ) ->
                     ( model.route, Cmd.none )
@@ -150,7 +150,7 @@ view model =
             characterSelectionView
 
         WithCharacter adventureModel ->
-            adventureView adventureModel
+            adventureView model.userId adventureModel
 
 
 characterSelectionView : Html Msg
@@ -165,8 +165,8 @@ characterSelectionView =
         ]
 
 
-adventureView : AdventureModel -> Html Msg
-adventureView model =
+adventureView : String -> AdventureModel -> Html Msg
+adventureView userId model =
     case model.route of
         CharacterView ->
             div []
@@ -177,7 +177,7 @@ adventureView model =
                 ]
 
         CombatView combatModel ->
-            Html.map (AdventureEvent << CombatEvent) (Combat.view combatModel)
+            Html.map (AdventureEvent << CombatEvent) (Combat.view userId combatModel)
 
 
 characterView : Creature -> Html Msg

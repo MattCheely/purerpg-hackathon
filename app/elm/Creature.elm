@@ -1,4 +1,16 @@
-module Creature exposing (Attack, Creature, CreatureType(..), attack, decoder, encode, new, showSprite)
+module Creature
+    exposing
+        ( Attack
+        , Creature
+        , CreatureType(..)
+        , attack
+        , decoder
+        , encode
+        , isNPC
+        , isSame
+        , new
+        , showSprite
+        )
 
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src, style)
@@ -12,8 +24,14 @@ import Random exposing (Seed, step)
 
 type alias Creature =
     { creatureType : CreatureType
+    , id : String
     , hitPoints : Int
     }
+
+
+isSame : Creature -> Creature -> Bool
+isSame c1 c2 =
+    c1.id == c2.id
 
 
 type CreatureType
@@ -22,11 +40,17 @@ type CreatureType
     | Wizard
 
 
-new : CreatureType -> Creature
-new creatureType =
+new : CreatureType -> String -> Creature
+new creatureType id =
     { creatureType = creatureType
+    , id = id
     , hitPoints = maxHp creatureType
     }
+
+
+isNPC : Creature -> Bool
+isNPC creature =
+    creature.creatureType == Goblin
 
 
 maxHp : CreatureType -> Int
@@ -132,8 +156,9 @@ encode creature =
 
 decoder : Decoder Creature
 decoder =
-    Decode.map2 Creature
+    Decode.map3 Creature
         (Decode.field "creatureType" typeDecoder)
+        (Decode.field "player" Decode.string)
         (Decode.field "hitPoints" Decode.int)
 
 
