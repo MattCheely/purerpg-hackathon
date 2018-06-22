@@ -28,7 +28,22 @@ body {
     border: none;
 }
 
-btn:focus {
+.adventure {
+    display: flex;
+    flex-direction: column;
+    height: 510px;
+    background-color: #7FC55A;
+}
+
+.adventureButton {
+    margin: 25px;
+    height: 50px;
+    width: 200px;
+    font-size: 30px;
+    background-color: #918564;
+}
+
+button:focus {
     outline: none;
     cursor: pointer;
 }

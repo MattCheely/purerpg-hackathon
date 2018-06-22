@@ -3,7 +3,7 @@ module Main exposing (main)
 import Combat
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, button, div, img, text)
-import Html.Attributes exposing (class, src)
+import Html.Attributes exposing (class, src, style)
 import Html.Events exposing (onClick)
 import InterOp
 import Json.Decode as Decode exposing (Value)
@@ -169,10 +169,18 @@ adventureView : String -> AdventureModel -> Html Msg
 adventureView userId model =
     case model.route of
         CharacterView ->
-            div []
+            div [ class "adventure" ]
                 [ div [ class "actions" ]
-                    [ button [ onClick (AdventureEvent GoAdventure) ] [ text "Adventure!" ]
+                    [ button [ class "adventureButton", onClick (AdventureEvent GoAdventure) ] [ text "Adventure!" ]
                     , characterView model.character
+                    ]
+                , div
+                    [ class "experienceBar", style [ ( "align-self", "center" ) ] ]
+                    [ text "XP"
+                    , div
+                        [ class "experienceLevel progressBar", style [ ( "margin", "10px" ) ] ]
+                        [ div [ class "experienceLevel progress", style [ ( "width", "60%" ) ] ] []
+                        ]
                     ]
                 ]
 
