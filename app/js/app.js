@@ -25,7 +25,8 @@ module.exports = {
                 const app = require('elm/Main.elm').Main.fullscreen({
                     userId: this.userId,
                     token: this.accessToken,
-                    char: this.characterModel
+                    char: this.characterModel,
+                    seed: Date.now()
                 });
 
                 app.ports.toJs.subscribe(this.fromElm.bind(this));
@@ -105,6 +106,12 @@ module.exports = {
                 }
                 clientApp.alerting.showToastPopup(title, message, options)
             }
+
+            if (action == "playSound") {
+                document.getElementById(`sound-${blob.sound}`).play();
+            }
+
+            console.log(action);
 
         } catch (error) {
             console.error(`caught error in port that would stop elm ${error}`);

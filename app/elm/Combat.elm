@@ -1,9 +1,10 @@
 module Combat exposing (Model, Msg, Status(..), encode, init, update, view)
 
-import Creature exposing (Attack, Creature, CreatureType(..))
+import Creature exposing (Attack, AttackResult(..), Creature, CreatureType(..))
 import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, classList)
 import Html.Events exposing (onClick)
+import Json.Decode as Decode
 import Json.Encode as Encode exposing (object)
 import List.Extra as ListX
 import Random exposing (Seed, initialSeed)
@@ -28,14 +29,14 @@ type Status
     | Ongoing
 
 
-init : Creature -> Model
-init player =
+init : Creature -> Int -> Model
+init player seed =
     { turnHistory = []
     , party = [ player.id ]
     , turn = 0
     , turnOrder = [ player, Creature.new Goblin "" ]
     , status = Ongoing
-    , randomSeed = initialSeed 1
+    , randomSeed = initialSeed seed
     }
 
 
@@ -94,6 +95,7 @@ getEnemies model =
 
 type Msg
     = PlayerAttack String
+    | ClearAttacks String
 
 
 gameStatus : Model -> String -> Status
@@ -118,13 +120,41 @@ gameStatus model userId =
             Defeat
 
 
-update : Msg -> Model -> String -> Model
+update : Msg -> Model -> String -> ( Model, Maybe String )
 update msg model userId =
     case msg of
         PlayerAttack targetId ->
             -- Handle the player's attack action, then handle any subsequent NPC turns.
-            handleAttack userId userId targetId model
-                |> doNPCAttacks userId
+            let
+                newModel =
+                    handleAttack userId userId targetId model
+                        |> doNPCAttacks userId
+
+                hadHit =
+                    List.any
+                        (\attack ->
+                            case attack.result of
+                                Hit _ ->
+                                    True
+
+                                Miss ->
+                                    False
+                        )
+                        newModel.turnHistory
+            in
+            ( newModel
+            , if hadHit then
+                Just "hit"
+              else
+                Nothing
+            )
+
+        ClearAttacks creatureId ->
+            ( { model
+                | turnHistory = List.filter (\attack -> attack.victim.id /= creatureId) model.turnHistory
+              }
+            , Nothing
+            )
 
 
 doNPCAttacks : String -> Model -> Model
@@ -211,26 +241,30 @@ combat model userId =
     in
     div []
         [ div [ class "characterDisplay" ]
-            [ div [ class "character" ] [ showAllies (getParty model) ]
-            , div [ class "enemies faceLeft" ] [ showEnemies (getEnemies model) (isPlayerTurn model userId) playerType ]
+            [ div [ class "character" ]
+                [ showAllies (getParty model) model.turnHistory
+                ]
+            , div [ class "enemies faceLeft" ]
+                [ showEnemies (getEnemies model) (isPlayerTurn model userId) playerType model.turnHistory
+                ]
             ]
         ]
 
 
-showEnemies : List Creature -> Bool -> CreatureType -> Html Msg
-showEnemies enemies isPlayerTurn playerType =
+showEnemies : List Creature -> Bool -> CreatureType -> List Attack -> Html Msg
+showEnemies enemies isPlayerTurn playerType attacks =
     div []
-        (List.map (showEnemy isPlayerTurn playerType) enemies)
+        (List.map (showEnemy isPlayerTurn playerType attacks) enemies)
 
 
-showAllies : List Creature -> Html Msg
-showAllies allies =
+showAllies : List Creature -> List Attack -> Html Msg
+showAllies allies attacks =
     div []
-        (List.map Creature.showSprite allies)
+        (List.map (showCreature attacks) allies)
 
 
-showEnemy : Bool -> CreatureType -> Creature -> Html Msg
-showEnemy isPlayerTurn playerType enemy =
+showEnemy : Bool -> CreatureType -> List Attack -> Creature -> Html Msg
+showEnemy isPlayerTurn playerType attacks enemy =
     let
         attackClass =
             case playerType of
@@ -246,7 +280,34 @@ showEnemy isPlayerTurn playerType enemy =
             else
                 div [ class "enemy" ]
     in
-    baseElement [ Creature.showSprite enemy ]
+    baseElement [ showCreature attacks enemy ]
+
+
+showCreature : List Attack -> Creature -> Html Msg
+showCreature attacks creature =
+    let
+        wasHit =
+            attacks
+                |> List.any
+                    (\attack ->
+                        case attack.result of
+                            Hit _ ->
+                                attack.victim.id == creature.id
+
+                            Miss ->
+                                False
+                    )
+    in
+    div
+        [ classList [ ( "wasHit", wasHit ) ]
+        , onAnimationEnd (ClearAttacks creature.id)
+        ]
+        [ Creature.showSprite creature ]
+
+
+onAnimationEnd : msg -> Html.Attribute msg
+onAnimationEnd msg =
+    Html.Events.on "animationend" (Decode.succeed msg)
 
 
 

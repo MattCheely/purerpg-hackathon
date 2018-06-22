@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/local/bin/node /usr/local/Cellar/yarn/1.2.0/libexec/bin/yarn.js install
+  /usr/local/bin/node /usr/local/Cellar/yarn/1.2.0/libexec/bin/yarn.js
 
 PATH: 
   /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
@@ -2967,7 +2967,7 @@ Lockfile:
       y18n "^3.2.0"
 
 Trace: 
-  Error: https://purecloud.artifactoryonline.com/purecloud/api/npm/inin-internal-npm/stupid-server/-/stupid-server-0.2.2.tgz?dl=https://registry.yarnpkg.com/stupid-server/-/stupid-server-0.2.2.tgz: Request failed "401 Unauthorized"
+  Error: https://purecloud.artifactoryonline.com/purecloud/api/npm/inin-internal-npm/http-proxy/-/http-proxy-1.17.0.tgz?dl=https://registry.yarnpkg.com/http-proxy/-/http-proxy-1.17.0.tgz: Request failed "401 Unauthorized"
       at Request.<anonymous> (/usr/local/Cellar/yarn/1.2.0/libexec/lib/cli.js:59218:26)
       at Request.emit (events.js:159:13)
       at Request.module.exports.Request.onRequestResponse (/usr/local/Cellar/yarn/1.2.0/libexec/lib/cli.js:123806:10)

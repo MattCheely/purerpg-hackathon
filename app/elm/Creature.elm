@@ -1,6 +1,7 @@
 module Creature
     exposing
         ( Attack
+        , AttackResult(..)
         , Creature
         , CreatureType(..)
         , attack
@@ -90,10 +91,16 @@ attack attacker victim seed =
 
         ( damage, randomSeed ) =
             step damageGenerator seed
+
+        result =
+            if damage == 0 then
+                Miss
+            else
+                Hit damage
     in
     ( { attacker = attacker
       , victim = { victim | hitPoints = victim.hitPoints - damage }
-      , result = Hit damage
+      , result = result
       }
     , randomSeed
     )
