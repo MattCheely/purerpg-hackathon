@@ -43,9 +43,12 @@ body {
     background-color: #918564;
 }
 
+button {
+    cursor: pointer;
+}
+
 button:focus {
     outline: none;
-    cursor: pointer;
 }
 
 img:focus {
