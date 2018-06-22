@@ -3,6 +3,40 @@ body {
   text-align: center;
 }
 
+.chooseText {
+    font-size: 30px;
+}
+
+.characters {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+}
+
+.charSelect {
+    background-color: #7FC55A;
+    height: 510px;
+}
+
+.characterSelect {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 20px;
+    margin-top: 50px;
+    background-color: #7FC55A;
+    border: none;
+}
+
+btn:focus {
+    outline: none;
+    cursor: pointer;
+}
+
+img:focus {
+    outline: none;
+}
+
 .counter {
   font-size: 3rem;
 }

@@ -155,12 +155,12 @@ view model =
 
 characterSelectionView : Html Msg
 characterSelectionView =
-    div []
-        [ div []
+    div [ class "charSelect" ]
+        [ div [ class "chooseText" ]
             [ text "Choose your character!" ]
         , div [ class "characters" ]
-            [ button [ onClick (CharacterSelected Wizard) ] [ text "Wizard!" ]
-            , button [ onClick (CharacterSelected Fighter) ] [ text "Fighter!" ]
+            [ button [ class "characterSelect", onClick (CharacterSelected Wizard) ] [ img [ src "images/wizard.png" ] [], text "Wizard!" ]
+            , button [ class "characterSelect", onClick (CharacterSelected Fighter) ] [ img [ src "images/fighter.png" ] [], text "Fighter!" ]
             ]
         ]
 
