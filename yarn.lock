@@ -2342,9 +2342,9 @@ punycode@^1.4.1, punycode@~1.4.0:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-1.4.1.tgz#c0d5a63b2718800ad8e1eb0fa5269c84dd41845e"
 
-purecloud-client-app-sdk@^1.0.0-beta.4:
-  version "1.0.0-beta.4"
-  resolved "https://registry.yarnpkg.com/purecloud-client-app-sdk/-/purecloud-client-app-sdk-1.0.0-beta.4.tgz#03e271b7245790e4247f912792638c2fa664886b"
+purecloud-client-app-sdk@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/purecloud-client-app-sdk/-/purecloud-client-app-sdk-1.0.0.tgz#01569a935987b0e7ac11c3f3b016dba2e8d17c78"
   dependencies:
     query-string "^5.0.0"
 
@@ -2574,11 +2574,11 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
     hash-base "^3.0.0"
     inherits "^2.0.1"
 
-safe-buffer@5.1.1, safe-buffer@^5.1.1, safe-buffer@~5.1.1:
+safe-buffer@5.1.1, safe-buffer@^5.0.1, safe-buffer@^5.1.1, safe-buffer@~5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.1.tgz#893312af69b2123def71f57889001671eeb2c853"
 
-safe-buffer@^5.0.1, safe-buffer@^5.1.0, safe-buffer@^5.1.2, safe-buffer@~5.1.0:
+safe-buffer@^5.1.0, safe-buffer@^5.1.2, safe-buffer@~5.1.0:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.2.tgz#991ec69d296e0313747d59bdfd2b745c35f8828d"
 

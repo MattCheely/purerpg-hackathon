@@ -1,9 +1,9 @@
 module Main exposing (main)
 
-import Combat
+import Combat exposing (Status(..))
 import Creature exposing (Attack, Creature, CreatureType(..))
-import Html exposing (Html, button, div, img, text)
-import Html.Attributes exposing (class, src, style)
+import Html exposing (Html, audio, button, div, img, text)
+import Html.Attributes exposing (class, id, src, style)
 import Html.Events exposing (onClick)
 import InterOp
 import Json.Decode as Decode exposing (Value)
@@ -27,6 +27,7 @@ type alias Model =
     { userId : String
     , token : String
     , appModel : AppModel
+    , seed : Int
     }
 
 
@@ -60,6 +61,10 @@ init config =
         charDecodeResult =
             Decode.decodeValue (Decode.field "char" Creature.decoder) config
 
+        seed =
+            Decode.decodeValue (Decode.field "seed" Decode.int) config
+                |> Result.withDefault 42
+
         appModel =
             case charDecodeResult of
                 Ok character ->
@@ -71,7 +76,11 @@ init config =
                 Err msg ->
                     SelectingCharacter
     in
-    ( { userId = userId, token = token, appModel = appModel }
+    ( { userId = userId
+      , token = token
+      , seed = seed
+      , appModel = appModel
+      }
     , Cmd.none
     )
 
@@ -94,13 +103,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         ( appModel, cmd ) =
-            updateApp model.userId msg model.appModel
+            updateApp model.seed model.userId msg model.appModel
     in
     ( { model | appModel = appModel }, cmd )
 
 
-updateApp : String -> Msg -> AppModel -> ( AppModel, Cmd Msg )
-updateApp userId msg appModel =
+updateApp : Int -> String -> Msg -> AppModel -> ( AppModel, Cmd Msg )
+updateApp seed userId msg appModel =
     case ( appModel, msg ) of
         ( SelectingCharacter, CharacterSelected creatureType ) ->
             let
@@ -115,23 +124,38 @@ updateApp userId msg appModel =
             )
 
         ( WithCharacter adventureModel, AdventureEvent msg ) ->
-            updateAdventure userId msg adventureModel
+            updateAdventure seed userId msg adventureModel
                 |> Tuple.mapFirst WithCharacter
 
         ( _, _ ) ->
             Debug.log "Message & Model mismatch" ( appModel, Cmd.none )
 
 
-updateAdventure : String -> AdventureMsg -> AdventureModel -> ( AdventureModel, Cmd Msg )
-updateAdventure userId msg model =
+updateAdventure : Int -> String -> AdventureMsg -> AdventureModel -> ( AdventureModel, Cmd Msg )
+updateAdventure seed userId msg model =
     let
         ( updatedRoute, cmd ) =
             case ( msg, model.route ) of
                 ( GoAdventure, CharacterView ) ->
-                    ( CombatView (Combat.init model.character), Cmd.none )
+                    ( CombatView (Combat.init model.character seed), Cmd.none )
 
                 ( CombatEvent combatMsg, CombatView combatModel ) ->
-                    ( CombatView (Combat.update combatMsg combatModel userId), InterOp.saveCombat "asdf" combatModel )
+                    let
+                        ( newModel, sound ) =
+                            Combat.update combatMsg combatModel userId
+
+                        soundCmd =
+                            case sound of
+                                Just name ->
+                                    InterOp.playSound name
+
+                                Nothing ->
+                                    Cmd.none
+                    in
+                    if newModel.status == Victory then
+                        ( CombatView newModel, Cmd.batch [ InterOp.showAchievement, soundCmd ] )
+                    else
+                        ( CombatView newModel, Cmd.batch [ InterOp.saveCombat "asdf" combatModel, soundCmd ] )
 
                 ( _, _ ) ->
                     ( model.route, Cmd.none )
@@ -145,12 +169,26 @@ updateAdventure userId msg model =
 
 view : Model -> Html Msg
 view model =
-    case model.appModel of
-        SelectingCharacter ->
-            characterSelectionView
+    div []
+        [ case model.appModel of
+            SelectingCharacter ->
+                characterSelectionView
 
-        WithCharacter adventureModel ->
-            adventureView model.userId adventureModel
+            WithCharacter adventureModel ->
+                adventureView model.userId adventureModel
+        , sounds
+        ]
+
+
+sounds : Html Msg
+sounds =
+    div []
+        [ sound "hit" ]
+
+
+sound : String -> Html Msg
+sound name =
+    audio [ id ("sound-" ++ name), src ("sounds/" ++ name ++ ".wav") ] []
 
 
 characterSelectionView : Html Msg

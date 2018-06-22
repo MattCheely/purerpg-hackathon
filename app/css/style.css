@@ -60,6 +60,14 @@ img:focus {
   margin: 5px;
 }
 
+.characterSelect button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 10px;
+    cursor: pointer;
+}
+
 .characterDisplay {
     display: flex;
     justify-content: space-around;
@@ -152,11 +160,11 @@ img:focus {
 }
 
 .spellAttack {
-    cursor: url(/images/lightning.png), auto;
+    cursor: url(../images/lightning.png), auto;
 }
 
 .weaponAttack {
-    cursor: url(/images/sword.png), auto;
+    cursor: url(../images/sword.png), auto;
 }
 
 .wasHit {
