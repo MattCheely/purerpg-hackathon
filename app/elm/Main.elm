@@ -2,8 +2,8 @@ module Main exposing (main)
 
 import Combat exposing (Status(..))
 import Creature exposing (Attack, Creature, CreatureType(..))
-import Html exposing (Html, button, div, img, text, audio)
-import Html.Attributes exposing (class, src, id)
+import Html exposing (Html, audio, button, div, img, text)
+import Html.Attributes exposing (class, id, src)
 import Html.Events exposing (onClick)
 import InterOp
 import Json.Decode as Decode exposing (Value)
@@ -76,13 +76,13 @@ init config =
                 Err msg ->
                     SelectingCharacter
     in
-        ( { userId = userId
-          , token = token
-          , seed = seed
-          , appModel = appModel
-          }
-        , Cmd.none
-        )
+    ( { userId = userId
+      , token = token
+      , seed = seed
+      , appModel = appModel
+      }
+    , Cmd.none
+    )
 
 
 
@@ -105,7 +105,7 @@ update msg model =
         ( appModel, cmd ) =
             updateApp model.seed model.userId msg model.appModel
     in
-        ( { model | appModel = appModel }, cmd )
+    ( { model | appModel = appModel }, cmd )
 
 
 updateApp : Int -> String -> Msg -> AppModel -> ( AppModel, Cmd Msg )
@@ -116,12 +116,12 @@ updateApp seed userId msg appModel =
                 char =
                     Creature.new creatureType userId
             in
-                ( WithCharacter
-                    { character = char
-                    , route = CharacterView
-                    }
-                , InterOp.saveCharacter userId char
-                )
+            ( WithCharacter
+                { character = char
+                , route = CharacterView
+                }
+            , InterOp.saveCharacter userId char
+            )
 
         ( WithCharacter adventureModel, AdventureEvent msg ) ->
             updateAdventure seed userId msg adventureModel
@@ -152,15 +152,15 @@ updateAdventure seed userId msg model =
                                 Nothing ->
                                     Cmd.none
                     in
-                        if newModel.status == Victory then
-                            ( CombatView newModel, Cmd.batch [ InterOp.showAchievement, soundCmd ] )
-                        else
-                            ( CombatView newModel, Cmd.batch [ InterOp.saveCombat "asdf" combatModel, soundCmd ] )
+                    if newModel.status == Victory then
+                        ( CombatView newModel, Cmd.batch [ InterOp.showAchievement, soundCmd ] )
+                    else
+                        ( CombatView newModel, Cmd.batch [ InterOp.saveCombat "asdf" combatModel, soundCmd ] )
 
                 ( _, _ ) ->
                     ( model.route, Cmd.none )
     in
-        ( { model | route = updatedRoute }, cmd )
+    ( { model | route = updatedRoute }, cmd )
 
 
 

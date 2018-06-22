@@ -98,12 +98,12 @@ attack attacker victim seed =
             else
                 Hit damage
     in
-        ( { attacker = attacker
-          , victim = { victim | hitPoints = victim.hitPoints - damage }
-          , result = result
-          }
-        , randomSeed
-        )
+    ( { attacker = attacker
+      , victim = { victim | hitPoints = victim.hitPoints - damage }
+      , result = result
+      }
+    , randomSeed
+    )
 
 
 type alias Attack =
