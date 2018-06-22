@@ -56,19 +56,39 @@ body {
     align-items: center;
 }
 
-.characterControl {
+.victoryDisplay {
     display: flex;
-    height: 200px;
+    flex-direction: column;
+    align-items: center;
+    height: 510px;
     background-color: #7FC55A;
+    font-size: 75px;
 }
 
-.attackButton {
-    height: 50px;
-    width: 25%;
-    margin: 20px;
+.victoryImg {
+    height: 250px;
+    width: 200px;
+    padding: 50px 15px;
+}
 
-    background-color: #918564;
-    border-color: #70674C;
+.experience {
+    display: flex;
+    flex-direction: column;
+    font-size: 30px;
+}
+
+.experienceBar {
+    display: flex;
+    align-items: center;
+}
+
+.experienceLevel.progressBar {
+    display: flex;
+    margin-left: 15px;
+}
+
+.experienceLevel.progress {
+    background-color: purple;
 }
 
 .faceLeft .creature img {
