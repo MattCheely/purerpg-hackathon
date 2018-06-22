@@ -29,14 +29,14 @@ type Status
     | Ongoing
 
 
-init : Creature -> Model
-init player =
+init : Creature -> Int -> Model
+init player seed =
     { turnHistory = []
     , party = [ player.id ]
     , turn = 0
     , turnOrder = [ player, Creature.new Goblin "" ]
     , status = Ongoing
-    , randomSeed = initialSeed 1
+    , randomSeed = initialSeed seed
     }
 
 
@@ -120,18 +120,41 @@ gameStatus model userId =
                 Defeat
 
 
-update : Msg -> Model -> String -> Model
+update : Msg -> Model -> String -> ( Model, Maybe String )
 update msg model userId =
     case msg of
         PlayerAttack targetId ->
             -- Handle the player's attack action, then handle any subsequent NPC turns.
-            handleAttack userId userId targetId model
-                |> doNPCAttacks userId
+            let
+                newModel =
+                    handleAttack userId userId targetId model
+                        |> doNPCAttacks userId
+
+                hadHit =
+                    List.any
+                        (\attack ->
+                            case attack.result of
+                                Hit _ ->
+                                    True
+
+                                Miss ->
+                                    False
+                        )
+                        newModel.turnHistory
+            in
+                ( newModel
+                , if hadHit then
+                    Just "hit"
+                  else
+                    Nothing
+                )
 
         ClearAttacks creatureId ->
-            { model
+            ( { model
                 | turnHistory = List.filter (\attack -> (attack.victim.id /= creatureId)) model.turnHistory
-            }
+              }
+            , Nothing
+            )
 
 
 doNPCAttacks : String -> Model -> Model

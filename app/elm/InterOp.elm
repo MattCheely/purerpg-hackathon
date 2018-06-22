@@ -38,3 +38,12 @@ showAchievement =
         , ( "message", Encode.string "Won your first battle" )
         ]
         |> toJs
+
+
+playSound : String -> Cmd msg
+playSound name =
+    Encode.object
+        [ ( "action", Encode.string "playSound" )
+        , ( "sound", Encode.string name )
+        ]
+        |> toJs
