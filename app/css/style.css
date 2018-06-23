@@ -3,6 +3,58 @@ body {
   text-align: center;
 }
 
+.chooseText {
+    font-size: 30px;
+}
+
+.characters {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+}
+
+.charSelect {
+    background-color: #7FC55A;
+    height: 510px;
+}
+
+.characterSelect {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 20px;
+    margin-top: 50px;
+    background-color: #7FC55A;
+    border: none;
+}
+
+.adventure {
+    display: flex;
+    flex-direction: column;
+    height: 510px;
+    background-color: #7FC55A;
+}
+
+.adventureButton {
+    margin: 25px;
+    height: 50px;
+    width: 200px;
+    font-size: 30px;
+    background-color: #918564;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:focus {
+    outline: none;
+}
+
+img:focus {
+    outline: none;
+}
+
 .counter {
   font-size: 3rem;
 }
@@ -64,19 +116,39 @@ body {
     align-items: center;
 }
 
-.characterControl {
+.victoryDisplay {
     display: flex;
-    height: 200px;
+    flex-direction: column;
+    align-items: center;
+    height: 510px;
     background-color: #7FC55A;
+    font-size: 75px;
 }
 
-.attackButton {
-    height: 50px;
-    width: 25%;
-    margin: 20px;
+.victoryImg {
+    height: 250px;
+    width: 200px;
+    padding: 50px 15px;
+}
 
-    background-color: #918564;
-    border-color: #70674C;
+.experience {
+    display: flex;
+    flex-direction: column;
+    font-size: 30px;
+}
+
+.experienceBar {
+    display: flex;
+    align-items: center;
+}
+
+.experienceLevel.progressBar {
+    display: flex;
+    margin-left: 15px;
+}
+
+.experienceLevel.progress {
+    background-color: purple;
 }
 
 .faceLeft .creature img {

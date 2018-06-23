@@ -1,8 +1,8 @@
 module Combat exposing (Model, Msg, Status(..), encode, init, update, view)
 
 import Creature exposing (Attack, AttackResult(..), Creature, CreatureType(..))
-import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class, classList)
+import Html exposing (Html, button, div, img, text)
+import Html.Attributes exposing (class, classList, src, style)
 import Html.Events exposing (onClick)
 import Json.Decode as Decode
 import Json.Encode as Encode exposing (object)
@@ -220,12 +220,36 @@ handleAttack userId attackerId victimId model =
 
 view : String -> Model -> Html Msg
 view userId model =
+    let
+        playerType =
+            getCombatant model userId
+                |> Maybe.map .creatureType
+                |> Maybe.withDefault Fighter
+    in
     case model.status of
         Victory ->
-            div [] [ text "Victory" ]
+            div [ class "victoryDisplay" ]
+                [ text "Victory"
+                , img [ class "victoryImg", src (victoryImg playerType model.status) ] []
+                , div [ class "experience" ]
+                    [ text "+10 XP"
+                    , div
+                        [ class "experienceBar" ]
+                        [ text "XP"
+                        , div
+                            [ class "experienceLevel progressBar" ]
+                            [ div [ class "experienceLevel progress", style [ ( "width", "60%" ) ] ] []
+                            , div [ class "progress", style [ ( "width", "10%" ) ] ] []
+                            ]
+                        ]
+                    ]
+                ]
 
         Defeat ->
-            div [] [ text "Defeat" ]
+            div [ class "victoryDisplay" ]
+                [ text "Defeat"
+                , img [ class "victoryImg", src (victoryImg playerType model.status) ] []
+                ]
 
         Ongoing ->
             combat model userId
@@ -261,6 +285,35 @@ showAllies : List Creature -> List Attack -> Html Msg
 showAllies allies attacks =
     div []
         (List.map (showCreature attacks) allies)
+
+
+victoryImg : CreatureType -> Status -> String
+victoryImg creatureType status =
+    case creatureType of
+        Wizard ->
+            case status of
+                Victory ->
+                    "images/wizard-victory.gif"
+
+                Defeat ->
+                    "images/wizard-defeat.gif"
+
+                _ ->
+                    ""
+
+        Fighter ->
+            case status of
+                Victory ->
+                    "images/warrior-victory.gif"
+
+                Defeat ->
+                    "images/warrior-defeat.gif"
+
+                _ ->
+                    ""
+
+        _ ->
+            ""
 
 
 showEnemy : Bool -> CreatureType -> List Attack -> Creature -> Html Msg

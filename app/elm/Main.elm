@@ -3,7 +3,7 @@ module Main exposing (main)
 import Combat exposing (Status(..))
 import Creature exposing (Attack, Creature, CreatureType(..))
 import Html exposing (Html, audio, button, div, img, text)
-import Html.Attributes exposing (class, id, src)
+import Html.Attributes exposing (class, id, src, style)
 import Html.Events exposing (onClick)
 import InterOp
 import Json.Decode as Decode exposing (Value)
@@ -193,14 +193,12 @@ sound name =
 
 characterSelectionView : Html Msg
 characterSelectionView =
-    div []
-        [ div []
+    div [ class "charSelect" ]
+        [ div [ class "chooseText" ]
             [ text "Choose your character!" ]
-        , div [ class "characterSelect" ]
-            [ button [ onClick (CharacterSelected Wizard) ]
-                [ img [ src "images/wizard.png" ] [] ]
-            , button [ onClick (CharacterSelected Fighter) ]
-                [ img [ src "images/fighter.png" ] [] ]
+        , div [ class "characters" ]
+            [ button [ class "characterSelect", onClick (CharacterSelected Wizard) ] [ img [ src "images/wizard.png" ] [], text "Wizard!" ]
+            , button [ class "characterSelect", onClick (CharacterSelected Fighter) ] [ img [ src "images/fighter.png" ] [], text "Fighter!" ]
             ]
         ]
 
@@ -209,10 +207,18 @@ adventureView : String -> AdventureModel -> Html Msg
 adventureView userId model =
     case model.route of
         CharacterView ->
-            div []
+            div [ class "adventure" ]
                 [ div [ class "actions" ]
-                    [ button [ onClick (AdventureEvent GoAdventure) ] [ text "Adventure!" ]
+                    [ button [ class "adventureButton", onClick (AdventureEvent GoAdventure) ] [ text "Adventure!" ]
                     , characterView model.character
+                    ]
+                , div
+                    [ class "experienceBar", style [ ( "align-self", "center" ) ] ]
+                    [ text "XP"
+                    , div
+                        [ class "experienceLevel progressBar", style [ ( "margin", "10px" ) ] ]
+                        [ div [ class "experienceLevel progress", style [ ( "width", "60%" ) ] ] []
+                        ]
                     ]
                 ]
 
